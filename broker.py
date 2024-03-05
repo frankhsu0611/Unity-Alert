@@ -10,6 +10,7 @@ messages = defaultdict(dict)
 subscribers = defaultdict(dict)
 topic_subscribers = defaultdict(set)
 
+
 @app.route('/create_topic/<topic>', methods=['POST'])
 def create_topic(topic):
     if topic in topics:
@@ -31,7 +32,7 @@ def subscribe(topic, sub_id):
     # create a new subscriber
     if not sub_id:
         sub_id = str(uuid.uuid4())
-        subcriber = {'ip': request.remote_addr, 'message_ids': set()}
+        subcriber = {'callback_url': request.get_json().get('callback_url'), 'message_ids': set()}
         subscribers[sub_id] = subcriber
         print(f"Subscriber {sub_id} has been created.")
     elif sub_id not in subscribers:
@@ -42,23 +43,22 @@ def subscribe(topic, sub_id):
         
 
 @app.route('/publish/<topic>', methods=['POST'])
-def publish_message(topic):
-    req = request.get_json()
-    message = {'topic': topic, 'content': req['content'], 'publisher': request.remote_addr, 
-               'created_at': datetime.now(), 'to_deliver': len(topic_subscribers[topic])}
+def publish(topic):
+    data = request.get_json()
     message_id = str(uuid.uuid4())
+    print('content:', data['content'])
+    message = {'message_id': message_id, 'topic': topic, 'content': data['content'], 'publisher': request.remote_addr, 
+               'created_at': datetime.now().isoformat(), 'to_deliver': len(topic_subscribers[topic])}
     messages[message_id] = message
     # add message to all subscribers
     for sub_id in topic_subscribers[topic]:
-        subscribers[sub_id]['message_ids'].add(message['id'])
+        subscribers[sub_id]['message_ids'].add(message_id)
     # send message to local subscribers
     for sub_id in topic_subscribers[topic]:
         send_to_subscriber(sub_id, message_id)
     # propagate message to other brokers
-    propagate_message(topic, message)
-    
-    
-    pass
+    # propagate_message(topic, message)
+    return jsonify({'topic': topic, 'message_id': message_id}), 200
 
 # broker functions
 def send_to_subscriber(sub_id, message_id):
@@ -68,24 +68,25 @@ def send_to_subscriber(sub_id, message_id):
     subscriber = subscribers[sub_id]
     
     if message_id not in subscriber['message_ids']:
-        print('message has been sent to subscriber or should not be sent')
+        print('message has been sent to subscriber once or should not be sent')
         return False
     
     # send message to subscriber
     subscriber['message_ids'].remove(message_id)
-    ip = subscriber['ip']
-    if not ip:
+    callback_url = subscriber['callback_url']
+    if not callback_url:
         print("Subscriber endpoint is missing.")
         return False
     
     headers = {'Content-Type': 'application/json'}
     payload = messages[message_id]
     try:
-        response = requests.post(ip, headers=headers, data=payload, timeout = 3)
+        response = requests.post(callback_url, headers=headers, json=payload, timeout = 3)
         if response.status_code != 200:
-            print(f"Failed to send message to subscriber {ip}.")
+            print(f"Failed to send message to subscriber {callback_url} with status code {response.status_code}.")
+            return False
         else:
-            print(f"Message sent to subscriber {ip}.")
+            print(f"Message sent to subscriber {callback_url}.")
             messages[message_id]['to_deliver'] -= 1
             if messages[message_id]['to_deliver'] <= 0:
                 del messages[message_id]
@@ -93,7 +94,7 @@ def send_to_subscriber(sub_id, message_id):
     except requests.exceptions.RequestException as e:
         print(f"Timeout error: {e}")
     except Exception as e:
-        print(f"Failed to send message to subscriber {ip}. Error: {e}")
+        print(f"Failed to send message to subscriber {callback_url}. Error: {e}")
     
             
 
