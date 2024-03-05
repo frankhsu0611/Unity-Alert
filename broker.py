@@ -8,33 +8,37 @@ app = Flask(__name__)
 topics = set()
 messages = defaultdict(dict)
 subscribers = defaultdict(dict)
-topic_subscribers = defaultdict(set())
+topic_subscribers = defaultdict(set)
 
-@app.route('/create_topic', methods=['POST'])
+@app.route('/create_topic/<topic>', methods=['POST'])
 def create_topic(topic):
     if topic in topics:
-        return jsonify({'error': 'Topic already exists'})
-    return jsonify({'topic': topic})
+        return jsonify({'error': 'Topic already exists'}), 400
+    topics.add(topic)
+    print(f"Topic {topic} has been created.")
+    return jsonify({'topic': topic, 'message': 'topic has been created'}), 200
 
 @app.route('/get_topics/<topic>', methods=['GET'])
 def get_topics():
     # return all key in messages
     return jsonify({'topics': list(topics)})
 
-@app.route('/subscribe/<topic>/', defaults={'sub_id': None})
-@app.route('/subscribe/<topic>'/'<sub_id>', methods=['POST'])
+@app.route('/subscribe/<topic>/', defaults={'sub_id': None}, methods=['POST'])
+@app.route('/subscribe/<topic>/<sub_id>', methods=['POST'])
 def subscribe(topic, sub_id):
     if topic not in topics:
-        return jsonify({'error': 'Topic does not exist'})
+        return jsonify({'error': 'Topic does not exist'}), 404
     # create a new subscriber
     if not sub_id:
         sub_id = str(uuid.uuid4())
         subcriber = {'ip': request.remote_addr, 'message_ids': set()}
         subscribers[sub_id] = subcriber
+        print(f"Subscriber {sub_id} has been created.")
     elif sub_id not in subscribers:
-        return jsonify({'error': 'Subscriber does not exist'})
+        return jsonify({'error': 'Subscriber does not exist'}), 404
     topic_subscribers[topic].add(sub_id)
-    return jsonify({'topic': topic, 'subscriber_id': sub_id})
+    print(f"Subscriber {sub_id} has been subscribed to topic {topic}.")
+    return jsonify({'topic': topic, 'subscriber_id': sub_id}), 200
         
 
 @app.route('/publish/<topic>', methods=['POST'])
@@ -58,7 +62,11 @@ def publish_message(topic):
 
 # broker functions
 def send_to_subscriber(sub_id, message_id):
+    if sub_id not in subscribers:
+        print(f"Subscriber {sub_id} does not exist.")
+        return False
     subscriber = subscribers[sub_id]
+    
     if message_id not in subscriber['message_ids']:
         print('message has been sent to subscriber or should not be sent')
         return False
@@ -94,4 +102,4 @@ def propagate_message(topic, message):
 
 
 if __name__ == '__main__':
-    app.run(port=5000)
+    app.run(port=5000, debug=True)

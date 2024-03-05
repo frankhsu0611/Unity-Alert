@@ -16,18 +16,39 @@ def subscribe_to_topic(base_url, topic, sub_id=None):
         if response.status_code == 200:
             print("Subscription successful.")
             data = response.json()
-            print(f"Topic: {data['topic']}, Subscriber ID: {data['subscriber_id']}")
+            print(data)
+            return response
         else:
             print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
+def create_topic(base_url, topic):
+    try:
+        response = requests.post(f"{base_url}/create_topic/{topic}")
+        if response.status_code == 200:
+            print(f"Topic {response.json()['topic']} created successfully.")
+            return response
+        else:
+            print(f"Failed to create topic. Status code: {response.status_code}, Message: {response.json()['error']}")
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
+        
+        
+        
+
 # Example usage
 base_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
-topic = "example_topic"
+topic1 = "example_topic1"
+topic2 = "example_topic2"
 
+create_topic(base_url, topic1)
+create_topic(base_url, topic2)
 # Try subscribing without specifying a subscriber ID (to test ID generation)
-subscribe_to_topic(base_url, topic)
+response = subscribe_to_topic(base_url, topic1)
 
 # Try subscribing with a specific subscriber ID
-subscribe_to_topic(base_url, topic, "specific_sub_id")
+if response.status_code != 200:
+    print("Failed to subscribe.")
+else:
+    subscribe_to_topic(base_url, topic2, response.json()['subscriber_id'])
