@@ -15,7 +15,7 @@ recent_propagate_messages = {}
 subscribers = {}
 topic_subscribers = defaultdict(set)
 broker_endpoints = {}
-
+local_timestamp = 0
 
 @app.route('/create_topic/<topic>', methods=['POST'])
 def create_topic(topic):
@@ -33,28 +33,32 @@ def get_topics():
 @app.route('/subscribe/<topic>', defaults={'sub_id': None}, methods=['POST'])
 @app.route('/subscribe/<topic>/<sub_id>', methods=['POST'])
 def subscribe(topic, sub_id):
+    global local_timestamp
+    data = request.get_json()
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
     if topic not in topics:
         return jsonify({'error': 'Topic does not exist'}), 404
     # create a new subscriber
     if not sub_id:
         sub_id = str(uuid.uuid4())
-        subcriber = {'callback_url': request.get_json().get('callback_url'), 'message_ids': set()}
+        subcriber = {'callback_url': data.get('callback_url'), 'message_ids': set()}
         subscribers[sub_id] = subcriber
         print(f"Subscriber {sub_id} has been created.")
     elif sub_id not in subscribers:
         return jsonify({'error': 'Subscriber does not exist'}), 404
     topic_subscribers[topic].add(sub_id)
-    print(f"Subscriber {sub_id} has been subscribed to topic {topic}.")
+    print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'subscriber_id': sub_id}), 200
         
 
 @app.route('/publish/<topic>', methods=['POST'])
 def publish(topic):
+    global local_timestamp
     data = request.get_json()
     message_id = str(uuid.uuid4())
-    print('content:', data['content'])
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
     message = {'message_id': message_id, 'topic': topic, 'content': data['content'], 'publisher': request.remote_addr, 
-               'created_at': datetime.now().isoformat(), 'propagate_from': broker_id, 'to_deliver': len(topic_subscribers[topic])}
+               'created_at': data['timestamp'], 'propagate_from': broker_id, 'to_deliver': len(topic_subscribers[topic])}
     print('number of subscribers:', len(topic_subscribers[topic]))
     
     messages[message_id] = message
@@ -70,10 +74,12 @@ def publish(topic):
 
 @app.route('/propagate/<topic>', methods=['POST'])
 def propagate(topic):
+    global local_timestamp
     data = request.get_json()
     if not data:
         print('no json found')
         return jsonify({'error': 'no json found'}), 400
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
     message = data['message']
     message_id = message['message_id']
     # check if message has been propagated
@@ -92,6 +98,7 @@ def propagate(topic):
         subscribers[sub_id]['message_ids'].add(message_id)
     for sub_id in topic_subscribers[topic]:
         send_to_subscriber(sub_id, message_id)
+    print(f"Message {message_id} has been propagated at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'message_id': message_id}), 200
 
     
@@ -119,7 +126,7 @@ def send_to_subscriber(sub_id, message_id):
         return False
     
     headers = {'Content-Type': 'application/json'}
-    payload = messages[message_id]
+    payload = {'message':messages[message_id], 'timestamp': local_timestamp}
     try:
         response = requests.post(callback_url, headers=headers, json=payload, timeout = 3)
         if response.status_code != 200:
@@ -140,7 +147,7 @@ def send_to_subscriber(sub_id, message_id):
             
 def propagate_message(topic, message_id, avaliable_hops = 10):
     print('CALLEDDDDDDDDD')
-    log = {'propagate_from': messages[message_id]['propagate_from'], 'message_id': message_id, 'topic': topic, 'timestamp': datetime.now()}
+    log = {'propagate_from': messages[message_id]['propagate_from'], 'message_id': message_id, 'topic': topic, 'timestamp': local_timestamp}
     recent_propagate_messages[message_id] = log
     for id, endpoint in broker_endpoints.items():
         # stop propagating if no more hops
@@ -153,7 +160,8 @@ def propagate_message(topic, message_id, avaliable_hops = 10):
                 print(f"Message {message_id} does not exist2.")
                 return
             response = requests.post(f"{endpoint}/propagate/{topic}", headers = headers,
-                                     json={'message':messages[message_id], 'avaliable_hops':avaliable_hops})
+                                     json={'message':messages[message_id], 'timestamp': local_timestamp, 
+                                           'avaliable_hops':avaliable_hops})
             if response.status_code != 200:
                 print(f"Failed to propagate message to {id} with status code {response.status_code}.")
         except requests.exceptions.Timeout as e:

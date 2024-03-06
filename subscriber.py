@@ -4,8 +4,11 @@ import threading
 
 app = Flask(__name__)
 messages = {}
+local_timestamp = 0
 
 def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
+    global local_timestamp
+    local_timestamp += 1
     # Construct the URL based on whether a sub_id is provided
     if sub_id:
         url = f"{broker_url}/subscribe/{topic}/{sub_id}"
@@ -14,7 +17,7 @@ def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
     
     try:
         headers = {'Content-Type': 'application/json'}
-        payload = {'callback_url': callback_url}
+        payload = {'callback_url': callback_url, 'timestamp': local_timestamp}
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             print("Subscription successful.")
@@ -27,6 +30,8 @@ def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
         print(f"An error occurred: {e}")
 
 def create_topic(broker_url, topic):
+    global local_timestamp
+    local_timestamp += 1
     try:
         response = requests.post(f"{broker_url}/create_topic/{topic}")
         if response.status_code == 200:
@@ -38,8 +43,10 @@ def create_topic(broker_url, topic):
         print(f"An error occurred: {e}")
 
 def publish_to_topic(broker_url, topic, content):
+    global local_timestamp
     try:
-        response = requests.post(f"{broker_url}/publish/{topic}", json={'content': content})
+        local_timestamp += 1
+        response = requests.post(f"{broker_url}/publish/{topic}", json={'timestamp': local_timestamp, 'content': content})
         if response.status_code == 200:
             print(f"Message published to topic {response.json()['topic']} with message ID {response.json()['message_id']}.")
             return response
@@ -50,11 +57,13 @@ def publish_to_topic(broker_url, topic, content):
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
-    message = request.get_json()
+    global local_timestamp
+    data = request.get_json()
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    message = data['message']
     message_id = message['message_id']
     messages[message_id] = message
-    print(f"Message {message_id} received.")
-    print('message content: ', message['content'])
+    print(f"Message {message_id} received. at timestamp {local_timestamp}")
     return jsonify({'message_id': message_id, 'status': 'received'}), 200
     
 
