@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import requests
-import json
 import threading
 
 app = Flask(__name__)
@@ -11,12 +10,11 @@ def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
     if sub_id:
         url = f"{broker_url}/subscribe/{topic}/{sub_id}"
     else:
-        url = f"{broker_url}/subscribe/{topic}/"
+        url = f"{broker_url}/subscribe/{topic}"
     
     try:
         headers = {'Content-Type': 'application/json'}
         payload = {'callback_url': callback_url}
-        # response = requests.post(url, headers=headers, data=json.dumps(payload))
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             print("Subscription successful.")
