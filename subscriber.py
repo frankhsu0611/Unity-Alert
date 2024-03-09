@@ -1,24 +1,27 @@
 from flask import Flask, request, jsonify
 import requests
 import threading
+from collections import defaultdict
 
 app = Flask(__name__)
 messages = {}
 local_timestamp = 0
+sub_id_at_broker = defaultdict(str) # key is broker_url
 
-def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
+def subscribe_to_topic(broker_url, topic, callback_url):
     global local_timestamp
     local_timestamp += 1
     # Construct the URL based on whether a sub_id is provided
     url = f"{broker_url}/subscribe"
     try:
         headers = {'Content-Type': 'application/json'}
-        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
+        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id_at_broker[broker_url]}
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             print("Subscription successful.")
             data = response.json()
             print(data)
+            sub_id_at_broker[data['broker_url']] = data['sub_id']
             return response
         else:
             print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
@@ -61,6 +64,17 @@ def get_topics(broker_url):
             print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
+        
+def get_subscribed_topic(broker_url):
+    try:
+        response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id_at_broker[broker_url]}")
+        if response.status_code == 200:
+            print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
+            return response
+        else:
+            print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
@@ -87,8 +101,9 @@ def make_api_calls():
     get_topics(broker_url)
     response = subscribe_to_topic(broker_url, topic1, callback_url)
 
-    subscribe_to_topic(broker_url, topic2, callback_url, response.json()['subscriber_id'],)
-
+    subscribe_to_topic(broker_url, topic2, callback_url)
+    get_subscribed_topic(broker_url)
+    
     publish_to_topic(broker_url, topic1, "Hello, world!")
 
 def run_flask_app():
