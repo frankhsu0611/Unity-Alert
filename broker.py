@@ -25,20 +25,24 @@ def create_topic(topic):
     print(f"Topic {topic} has been created.")
     return jsonify({'topic': topic, 'message': 'topic has been created'}), 200
 
-@app.route('/get_topics/<topic>', methods=['GET'])
+@app.route('/get_topics', methods=['GET'])
 def get_topics():
     # return all key in messages
     return jsonify({'topics': list(topics)}), 200
 
-@app.route('/subscribe/<topic>', defaults={'sub_id': None}, methods=['POST'])
-@app.route('/subscribe/<topic>/<sub_id>', methods=['POST'])
-def subscribe(topic, sub_id):
+@app.route('/subscribe', methods=['POST'])
+def subscribe():
     global local_timestamp
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'no json found'}), 400
     local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    topic = data['topic']
     if topic not in topics:
         return jsonify({'error': 'Topic does not exist'}), 404
     # create a new subscriber
+    topic = data['topic']
+    sub_id = data['sub_id']
     if not sub_id:
         sub_id = str(uuid.uuid4())
         subcriber = {'callback_url': data.get('callback_url'), 'message_ids': set()}
@@ -49,7 +53,11 @@ def subscribe(topic, sub_id):
     topic_subscribers[topic].add(sub_id)
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'subscriber_id': sub_id}), 200
-        
+
+@app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
+def get_subscribed_topics(sub_id):
+    lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
+    return jsonify({'subscribed_topics': lst}), 200
 
 @app.route('/publish/<topic>', methods=['POST'])
 def publish(topic):
