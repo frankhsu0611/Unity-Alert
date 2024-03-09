@@ -10,14 +10,10 @@ def subscribe_to_topic(broker_url, topic, callback_url, sub_id=None):
     global local_timestamp
     local_timestamp += 1
     # Construct the URL based on whether a sub_id is provided
-    if sub_id:
-        url = f"{broker_url}/subscribe/{topic}/{sub_id}"
-    else:
-        url = f"{broker_url}/subscribe/{topic}"
-    
+    url = f"{broker_url}/subscribe"
     try:
         headers = {'Content-Type': 'application/json'}
-        payload = {'callback_url': callback_url, 'timestamp': local_timestamp}
+        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
             print("Subscription successful.")
@@ -55,6 +51,17 @@ def publish_to_topic(broker_url, topic, content):
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
+def get_topics(broker_url):
+    try:
+        response = requests.get(f"{broker_url}/get_topics")
+        if response.status_code == 200:
+            print(f"Topics: {response.json()['topics']}")
+            return response
+        else:
+            print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
+
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
     global local_timestamp
@@ -77,6 +84,7 @@ def make_api_calls():
     create_topic(broker_url, topic1)
     create_topic(broker_url, topic2)
     # Try subscribing without specifying a subscriber ID (to test ID generation)
+    get_topics(broker_url)
     response = subscribe_to_topic(broker_url, topic1, callback_url)
 
     subscribe_to_topic(broker_url, topic2, callback_url, response.json()['subscriber_id'],)
