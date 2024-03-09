@@ -9,6 +9,7 @@ import argparse
 app = Flask(__name__)
 
 broker_id = None
+root_url = ''
 topics = set()
 messages = {}
 recent_propagate_messages = {}
@@ -43,6 +44,7 @@ def subscribe():
     # create a new subscriber
     topic = data['topic']
     sub_id = data['sub_id']
+    # empty string
     if not sub_id:
         sub_id = str(uuid.uuid4())
         subcriber = {'callback_url': data.get('callback_url'), 'message_ids': set()}
@@ -52,7 +54,7 @@ def subscribe():
         return jsonify({'error': 'Subscriber does not exist'}), 404
     topic_subscribers[topic].add(sub_id)
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
-    return jsonify({'topic': topic, 'subscriber_id': sub_id}), 200
+    return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
 @app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
 def get_subscribed_topics(sub_id):
@@ -189,6 +191,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # setup broker_id (port)
     broker_id = args.port
+    root_url = f'http://localhost:{args.port}'
     
     # set up broker_endpoints
     broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
