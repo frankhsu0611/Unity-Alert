@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Form, Container, Button } from "react-bootstrap";
+import axios from "axios";
 
 const SubscribeForm = () => {
   const [email, setEmail] = useState("");
@@ -14,19 +15,22 @@ const SubscribeForm = () => {
   };
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission to backend
-    fetch("/subscribe/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+
+    // Send subscription request using Axios
+    // console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeee", e);
+    axios
+      .post("http://localhost:5000/subscribe/", {
         email,
         topic: selectedTopic,
-      }),
-    })
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          // Any other headers as per your requirement
+        }
+      })
       .then((response) => {
-        if (response.ok) {
+        console.log(response);
+        if (response.status === 200) {
           // Subscription successful
           console.log("Subscription successful");
         } else {
@@ -35,6 +39,7 @@ const SubscribeForm = () => {
         }
       })
       .catch((error) => {
+        // console.log("Error heree: ", error);
         console.error("Error:", error);
       });
   };
@@ -44,10 +49,17 @@ const SubscribeForm = () => {
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
           <Form.Label>Email address</Form.Label>
-          <Form.Control type="email" placeholder="Enter email" />
+          <Form.Control
+            type="email"
+            placeholder="Enter email"
+            onChange={handleEmailChange}
+          />
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Select aria-label="Default select example">
+          <Form.Select
+            aria-label="Default select example"
+            onChange={handleTopicChange}
+          >
             <option>Select the topic</option>
             <option value="1">Topic1</option>
             <option value="2">Topic2</option>

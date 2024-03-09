@@ -1,9 +1,12 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
+
 import requests
 import threading
 from collections import defaultdict
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 messages = {}
 local_timestamp = 0
 sub_id_at_broker = defaultdict(str) # key is broker_url
@@ -77,6 +80,7 @@ def get_subscribed_topic(broker_url):
         print(f"An error occurred: {e}")
 
 @app.route('/enqueue', methods=['POST'])
+@cross_origin()
 def enqueue():
     global local_timestamp
     data = request.get_json()

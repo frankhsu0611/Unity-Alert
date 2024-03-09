@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from collections import defaultdict
 from datetime import datetime
 import requests
@@ -7,6 +8,7 @@ import argparse
 
 
 app = Flask(__name__)
+CORS(app)
 
 broker_id = None
 root_url = ''
@@ -18,7 +20,19 @@ topic_subscribers = defaultdict(set)
 broker_endpoints = {}
 local_timestamp = 0
 
+
+@app.route('/', methods=['OPTIONS'])
+@cross_origin()
+def handle_options():
+    return '', 200, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'OPTIONS, GET, POST, PUT, DELETE',
+        'Access-Control-Allow-Credentials': 'true',
+    }
+
 @app.route('/create_topic/<topic>', methods=['POST'])
+@cross_origin()
 def create_topic(topic):
     if topic in topics:
         return jsonify({'error': 'Topic already exists'}), 400
@@ -35,6 +49,7 @@ def get_topics():
 def subscribe():
     global local_timestamp
     data = request.get_json()
+    print(data)
     if not data:
         return jsonify({'error': 'no json found'}), 400
     local_timestamp = max(local_timestamp, data['timestamp']) + 1
@@ -57,11 +72,13 @@ def subscribe():
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
 @app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
+@cross_origin()
 def get_subscribed_topics(sub_id):
     lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
     return jsonify({'subscribed_topics': lst}), 200
 
 @app.route('/publish/<topic>', methods=['POST'])
+@cross_origin()
 def publish(topic):
     global local_timestamp
     data = request.get_json()
