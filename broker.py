@@ -15,25 +15,17 @@ root_url = ''
 topics = set()
 messages = {}
 recent_propagate_messages = {}
-subscribers = {}
-topic_subscribers = defaultdict(set)
+subscribers = {'abcde@123'}
+topic_subscribers = {'topic1':['abcde@123'], 'topic2': ['abcde@123']}
 broker_endpoints = {}
 local_timestamp = 0
 
 
-@app.route('/', methods=['OPTIONS'])
-@cross_origin()
-def handle_options():
-    return '', 200, {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Allow-Methods': 'OPTIONS, GET, POST, PUT, DELETE',
-        'Access-Control-Allow-Credentials': 'true',
-    }
 
-@app.route('/create_topic/<topic>', methods=['POST'])
-@cross_origin()
-def create_topic(topic):
+@app.route('/create_topic', methods=['POST'])
+def create_topic():
+    data = request.get_json()
+    topic = data['topic']
     if topic in topics:
         return jsonify({'error': 'Topic already exists'}), 400
     topics.add(topic)
@@ -57,8 +49,7 @@ def subscribe():
     if topic not in topics:
         return jsonify({'error': 'Topic does not exist'}), 404
     # create a new subscriber
-    topic = data['topic']
-    sub_id = data['sub_id']
+    sub_id = data['email']
     # empty string
     if not sub_id:
         sub_id = str(uuid.uuid4())
@@ -71,14 +62,15 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
-@app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
+@app.route('/get_subscribed_topics', methods=['GET'])
 @cross_origin()
-def get_subscribed_topics(sub_id):
+def get_subscribed_topics():
+    sub_id = request.args.get('email')
+    lst = []
     lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
     return jsonify({'subscribed_topics': lst}), 200
 
 @app.route('/publish/<topic>', methods=['POST'])
-@cross_origin()
 def publish(topic):
     global local_timestamp
     data = request.get_json()
@@ -213,4 +205,4 @@ if __name__ == '__main__':
     # set up broker_endpoints
     broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
     broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'
-    app.run(port=broker_id, debug=True)
+    app.run(port=broker_id, debug=False)

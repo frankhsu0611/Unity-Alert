@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Container, Row, Col, Card, Accordion } from "react-bootstrap";
 import SubscribeForm from "./SubscribeForm";
 import UnsubscribeForm from "./UnsubscribeForm";
@@ -11,7 +12,23 @@ import backgroundImage from "../wallpaper.png";
 const HomePage = () => {
   // State to track which accordion item is active
   const [activeAccordion, setActiveAccordion] = useState("1");
+  const [topics, setTopics] = useState([]);
 
+  useEffect(() => {
+    // Fetch topics list from backend API
+    axios.get("http://127.0.0.1:5000/get_topics")
+      .then(response => {
+        setTopics(response.data['topics']);
+        // console.log(topics);
+      })
+      .catch(error => {
+        console.error("Error fetching topics:", error);
+      });
+  }, []);
+
+  const handleNewTopic = (newTopic) => {
+    setTopics([...topics, newTopic]);
+  };
   // Function to handle accordion item clicks
   const handleAccordionClick = (index) => {
     setActiveAccordion(index === activeAccordion ? null : index);
@@ -55,7 +72,7 @@ const HomePage = () => {
                     <Accordion.Item eventKey="1">
                       <Accordion.Header>Subscribe</Accordion.Header>
                       <Accordion.Body>
-                        <SubscribeForm />
+                        <SubscribeForm topics={topics}/>
                       </Accordion.Body>
                     </Accordion.Item>
                   </Col>
@@ -73,7 +90,7 @@ const HomePage = () => {
                     <Accordion.Item eventKey="3">
                       <Accordion.Header>Create New Topic</Accordion.Header>
                       <Accordion.Body>
-                        <CreateTopicForm />
+                        <CreateTopicForm onNewTopic={handleNewTopic}/>
                       </Accordion.Body>
                     </Accordion.Item>
                   </Col>

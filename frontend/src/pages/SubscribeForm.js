@@ -1,52 +1,72 @@
-import React, { useState } from "react";
-import { Form, Container, Button } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { Form, Container, Button, Alert } from "react-bootstrap";
 import axios from "axios";
 
-const SubscribeForm = () => {
+const SubscribeForm = (props) => {
   const [email, setEmail] = useState("");
   const [selectedTopic, setSelectedTopic] = useState("");
+  const [message, setMessage] = useState("");
+  const topics = props.topics;
 
   const handleEmailChange = (e) => {
+    setMessage("");
     setEmail(e.target.value);
   };
 
   const handleTopicChange = (e) => {
+    setMessage("");
     setSelectedTopic(e.target.value);
   };
   const handleSubmit = (e) => {
+    setMessage("");
     e.preventDefault();
 
     // Send subscription request using Axios
-    // console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeee", e);
     axios
-      .post("http://localhost:5000/subscribe/", {
-        email,
+      .post("http://127.0.0.1:5000/subscribe", {
+        email: email,
         topic: selectedTopic,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          // Any other headers as per your requirement
-        }
+        timestamp: Date.now()
       })
       .then((response) => {
         console.log(response);
         if (response.status === 200) {
           // Subscription successful
           console.log("Subscription successful");
+          setMessage({
+            text: `Subscribed to ${selectedTopic} successfully.`,
+            variant: "success"
+          });
+          setEmail("");
+        setSelectedTopic("");
         } else {
           // Handle error
           console.error("Subscription failed");
+          setMessage({
+            text: `Failed to subscribe to topic. Please try again.`,
+            variant: "danger"
+          });
         }
       })
       .catch((error) => {
         // console.log("Error heree: ", error);
+        setMessage({
+            text: `${error.response.data.error}, Please try again.`,
+            variant: "danger"
+          });
         console.error("Error:", error);
       });
   };
 
+  const handleFormClick = () => {
+    // Clear the alert message when the form is clicked
+    setMessage("");
+  };
+
   return (
     <Container fluid>
-      <Form onSubmit={handleSubmit}>
+        {message && <Alert variant={message.variant}>{message.text}</Alert>}
+      <Form onSubmit={handleSubmit} onClick={handleFormClick}>
         <Form.Group className="mb-3">
           <Form.Label>Email address</Form.Label>
           <Form.Control
@@ -56,14 +76,15 @@ const SubscribeForm = () => {
           />
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Select
-            aria-label="Default select example"
+        <Form.Select
+            aria-label="Select topic"
             onChange={handleTopicChange}
+            value={selectedTopic}
           >
             <option>Select the topic</option>
-            <option value="1">Topic1</option>
-            <option value="2">Topic2</option>
-            <option value="3">Topic3</option>
+            {topics.map(topic => (
+              <option key={topic} value={topic}>{topic}</option>
+            ))}
           </Form.Select>
         </Form.Group>
         <Button variant="primary" type="submit">

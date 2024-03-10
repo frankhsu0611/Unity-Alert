@@ -6,7 +6,7 @@ import threading
 from collections import defaultdict
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app)
 messages = {}
 local_timestamp = 0
 sub_id_at_broker = defaultdict(str) # key is broker_url
