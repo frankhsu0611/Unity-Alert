@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 from collections import defaultdict
-from datetime import datetime
+from flask_cors import CORS
 import requests
 import uuid
 import argparse
 
 
 app = Flask(__name__)
+CORS(app)
 
 broker_id = None
 root_url = ''

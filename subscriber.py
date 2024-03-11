@@ -3,8 +3,10 @@ import requests
 import threading
 from collections import defaultdict
 import uuid
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 messages = {}
 local_timestamp = 0
 sub_id = str(uuid.uuid4())
