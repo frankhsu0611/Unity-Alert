@@ -24,9 +24,20 @@ const SubscribeForm = (props) => {
     // Send subscription request using Axios
     axios
       .post("http://127.0.0.1:5000/subscribe", {
+<<<<<<< HEAD
         email: email,
         topic: selectedTopic,
         timestamp: Date.now()
+=======
+        email,
+        topic: selectedTopic,
+        timestamp: 0,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          // Any other headers as per your requirement
+        }
+>>>>>>> bf58639 (current)
       })
       .then((response) => {
         console.log(response);
