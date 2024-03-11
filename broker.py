@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from collections import defaultdict
-from datetime import datetime
+from flask_cors import CORS
 import requests
 import uuid
 import argparse
@@ -52,12 +52,10 @@ def subscribe():
     sub_id = data['email']
     # empty string
     if not sub_id:
-        sub_id = str(uuid.uuid4())
-        subcriber = {'callback_url': data.get('callback_url'), 'message_ids': set()}
-        subscribers[sub_id] = subcriber
-        print(f"Subscriber {sub_id} has been created.")
-    elif sub_id not in subscribers:
-        return jsonify({'error': 'Subscriber does not exist'}), 404
+        # should comese with a sub_id
+        return jsonify({'error': 'Subscriber ID is missing'}), 400
+    if sub_id not in subscribers:
+        subscribers[sub_id] = {'callback_url': data['callback_url'], 'message_ids': set()}
     topic_subscribers[topic].add(sub_id)
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
@@ -120,6 +118,16 @@ def propagate(topic):
     print(f"Message {message_id} has been propagated at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'message_id': message_id}), 200
 
+@app.route('/get_missed_messages', methods=['GET'])
+def get_missed_messages():
+    data = request.get_json()
+    sub_id = data['sub_id']
+    if sub_id not in subscribers:
+        return jsonify({'error': 'Subscriber does not exist'}), 404
+    for message_id in subscribers[sub_id]['message_ids']:
+        send_to_subscriber(sub_id, message_id)
+    return jsonify({'sub_id': sub_id, 'message_ids': list(subscribers[sub_id]['message_ids'])}), 200
+    
     
 
 # broker functions
