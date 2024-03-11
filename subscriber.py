@@ -108,7 +108,7 @@ def get_missed(broker_url):
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
-@app.route('/c_reset_sub_id/<uuid>', methods=['GET'])
+@app.route('/c_reset_sub_id/<uuid>', methods=['POST'])
 def set_sub_id(uuid):
     global sub_id
     sub_id = uuid
