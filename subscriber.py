@@ -2,32 +2,32 @@ from flask import Flask, request, jsonify
 import requests
 import threading
 from collections import defaultdict
+import uuid
 
 app = Flask(__name__)
 messages = {}
 local_timestamp = 0
-sub_id_at_broker = defaultdict(str) # key is broker_url
+sub_id = str(uuid.uuid4())
+callback_url = "http://127.0.0.1:8000/enqueue"
 
-def subscribe_to_topic(broker_url, topic, callback_url):
+@app.route('/c_subscribe', methods=['POST'])
+def subscribe_to_topic(broker_url, topic):
     global local_timestamp
     local_timestamp += 1
-    # Construct the URL based on whether a sub_id is provided
     url = f"{broker_url}/subscribe"
     try:
         headers = {'Content-Type': 'application/json'}
-        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id_at_broker[broker_url]}
+        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            print("Subscription successful.")
-            data = response.json()
-            print(data)
-            sub_id_at_broker[data['broker_url']] = data['sub_id']
             return response
         else:
             print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
+            return response
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
+@app.route('/c_create_topic', methods=['POST'])
 def create_topic(broker_url, topic):
     global local_timestamp
     local_timestamp += 1
@@ -41,6 +41,7 @@ def create_topic(broker_url, topic):
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
+@app.route('/c_publish', methods=['POST'])
 def publish_to_topic(broker_url, topic, content):
     global local_timestamp
     try:
@@ -54,6 +55,7 @@ def publish_to_topic(broker_url, topic, content):
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
+@app.route('/c_get_topics', methods=['GET'])
 def get_topics(broker_url):
     try:
         response = requests.get(f"{broker_url}/get_topics")
@@ -64,10 +66,11 @@ def get_topics(broker_url):
             print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
-        
+
+@app.route('/c_get_subscribed_topics', methods=['GET'])
 def get_subscribed_topic(broker_url):
     try:
-        response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id_at_broker[broker_url]}")
+        response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
         if response.status_code == 200:
             print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
             return response
@@ -86,12 +89,27 @@ def enqueue():
     messages[message_id] = message
     print(f"Message {message_id} received. at timestamp {local_timestamp}")
     return jsonify({'message_id': message_id, 'status': 'received'}), 200
-    
+
+@app.route('/c_get_missed', methods=['GET'])
+def get_missed(broker_url):
+    global local_timestamp
+    data = request.get_json()
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    try:
+        response = requests.get(f"{broker_url}/get_missed_messages/{sub_id}")
+        if response.status_code == 200:
+            print(f"Missed messages received: {response.json()['message_ids']}")
+            return response
+        else:
+            print(f"Failed to get missed messages. Status code: {response.status_code}, Message: {response.json()['error']}")
+            return response
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
+
 
 def make_api_calls():  
     # Example usage
     broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
-    callback_url = "http://127.0.0.1:8000/enqueue"
     topic1 = "example_topic1"
     topic2 = "example_topic2"
 
@@ -99,9 +117,9 @@ def make_api_calls():
     create_topic(broker_url, topic2)
     # Try subscribing without specifying a subscriber ID (to test ID generation)
     get_topics(broker_url)
-    response = subscribe_to_topic(broker_url, topic1, callback_url)
+    response = subscribe_to_topic(broker_url, topic1)
 
-    subscribe_to_topic(broker_url, topic2, callback_url)
+    subscribe_to_topic(broker_url, topic2)
     get_subscribed_topic(broker_url)
     
     publish_to_topic(broker_url, topic1, "Hello, world!")
