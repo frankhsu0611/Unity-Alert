@@ -66,6 +66,25 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
+@app.route('/unsubscribe/', methods=['POST'])
+def unsubscribe():
+    global local_timestamp
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'no json found'}), 400
+    local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    topic = data['topic']
+    sub_id = data['sub_id']
+    if sub_id not in subscribers:
+        return jsonify({'error': 'Subscriber does not exist'}), 404
+    if topic not in topic_subscribers:
+        return jsonify({'error': 'Topic does not exist'}), 404
+    if sub_id not in topic_subscribers[topic]:
+        return jsonify({'error': f'Subscriber is not subscribed to topic: {topic}'}), 404
+    topic_subscribers[topic].remove(sub_id)
+    print(f"Subscriber {sub_id} has been unsubscribed from topic {topic}.")
+    return jsonify({'topic': topic, 'sub_id': sub_id}), 200
+
 @app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
 def get_subscribed_topics(sub_id):
     lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
@@ -217,7 +236,7 @@ if __name__ == '__main__':
     # setup broker_id (port)
     broker_id = args.port
     root_url = f'http://localhost:{args.port}'
-    
+                    
     # set up broker_endpoints
     broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
     broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'

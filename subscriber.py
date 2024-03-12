@@ -4,14 +4,18 @@ import threading
 from collections import defaultdict
 import uuid
 from flask_cors import CORS
+import argparse
 
 app = Flask(__name__)
 CORS(app)
 messages = {}
 broker_url = "http://127.0.0.1:5000"
 local_timestamp = 0
-sub_id = str(uuid.uuid4())
-callback_url = "http://127.0.0.1:8000/enqueue"
+sub_id = ""
+sub_port = ""
+callback_url = ""
+broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
+info = {}
 
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic():
@@ -131,6 +135,24 @@ def get_missed():
         print(f"An error occurred: {e}")
         return jsonify({'error': 'An error occurred while getting messages'}), 500
 
+def set_sub_id(uuid):
+    global sub_id
+    sub_id = uuid
+
+@app.route('/c_unsubscribe', methods=['POST'])
+def unsubscribe(topic):
+    global local_timestamp
+    local_timestamp += 1
+    try:
+        response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
+        if response.status_code == 200:
+            print(f"Unsubscribed from topic {response.json()['topic']}.")
+            return response
+        else:
+            print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
+            return response
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
 
 # def make_api_calls():  
 #     # Example usage
@@ -150,10 +172,37 @@ def get_missed():
 #     publish_to_topic(topic1, "Hello, world!")
 
 def run_flask_app():
-    app.run(port = 8000, debug=False)
+    app.run(port = sub_port, debug=False)
     
 if __name__ == "__main__":
-    # Run Flask app in a separate thread
+    # Run Flask app in a separate thread   parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
+    parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
+    parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
+    # Parse command-line arguments
+    args = parser.parse_args()
+    # setup broker_id (port)
+    sub_port = args.port
+    callback_url = f'http://localhost:{sub_port}/enqueue'
+    
+    # init sub_id
+    sub_id = str(uuid.uuid4())
+    
+    #read info.txt to get user info
+    try:
+        with open('info.txt', 'r') as f:
+            lines = f.readlines()
+            # skip the first line
+            for line in lines[1:]:
+                line = line.strip()
+                if line:
+                    key, value = line.split()
+                    # replace the sub_id if specified
+                    if key == 'sub_id':    
+                        sub_id = value
+    except FileNotFoundError:
+        print("info.txt not found. Using auto-generated sub_id.")
+    
+    # run the flask app
     threading.Thread(target=run_flask_app).start()
     # app.run(port = 8000, debug=True)
     # Make API calls
