@@ -1,41 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { ButtonGroup, Button, Container, Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Container, Row, Col, Card, Accordion } from "react-bootstrap";
-import SubscribeForm from "./SubscribeForm";
-import UnsubscribeForm from "./UnsubscribeForm";
-import CreateTopicForm from "./CreateTopicForm";
-
 import backgroundImage from "../wallpaper.png";
-// import backgroundImage from "../wallpaper3.jpg";
-// import "./HomePage.css"; // Import CSS for styling
 
 const HomePage = () => {
-  // State to track which accordion item is active
-  const [activeAccordion, setActiveAccordion] = useState("1");
-  const [topics, setTopics] = useState([]);
-
-  useEffect(() => {
-    // Fetch topics list from backend API
-    axios.get("http://127.0.0.1:5000/get_topics")
-      .then(response => {
-        setTopics(response.data['topics']);
-        // console.log(topics);
-      })
-      .catch(error => {
-        console.error("Error fetching topics:", error);
-      });
-  }, []);
-
-  const handleNewTopic = (newTopic) => {
-    setTopics([...topics, newTopic]);
-  };
-  // Function to handle accordion item clicks
-  const handleAccordionClick = (index) => {
-    setActiveAccordion(index === activeAccordion ? null : index);
-  };
+  // const [topics, setTopics] = useState([]);
+  const navigate = useNavigate();
 
   return (
-    // <div>
     <Container
       fluid
       className="vh-100"
@@ -54,54 +27,33 @@ const HomePage = () => {
             <h3 style={{ color: "gray" }}>Stay Connected, Stay Safe!</h3>
           </div>
         </Col>
-        {/* Second Column */}
         <Col
           md={8}
           className="d-flex align-items-center justify-content-center"
         >
-          <Card className="card" style={{ width: "80%" }}>
-            <Card.Body>
-              {/* Accordion */}
-              <Accordion
-                activeKey={activeAccordion}
-                onSelect={handleAccordionClick}
-              >
-                <Row className="w-100">
-                  <Col>
-                    {/* Subscribe Column */}
-                    <Accordion.Item eventKey="1">
-                      <Accordion.Header>Subscribe</Accordion.Header>
-                      <Accordion.Body>
-                        <SubscribeForm topics={topics}/>
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </Col>
-                  <Col>
-                    {/* Unsubscribe Column */}
-                    <Accordion.Item eventKey="2">
-                      <Accordion.Header>Unsubscribe</Accordion.Header>
-                      <Accordion.Body>
-                        <UnsubscribeForm />
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </Col>
-                  <Col>
-                    {/* Create New Topic Column */}
-                    <Accordion.Item eventKey="3">
-                      <Accordion.Header>Create New Topic</Accordion.Header>
-                      <Accordion.Body>
-                        <CreateTopicForm onNewTopic={handleNewTopic}/>
-                      </Accordion.Body>
-                    </Accordion.Item>
-                  </Col>
-                </Row>
-              </Accordion>
-            </Card.Body>
-          </Card>
+          <ButtonGroup vertical>
+            <Button variant="primary" onClick={() => navigate("/subscribe")}>
+              Subscribe
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate("/unsubscribe")}
+            >
+              Unsubscribe
+            </Button>
+            <Button variant="success" onClick={() => navigate("/create-topic")}>
+              Create Topic
+            </Button>
+            <Button variant="warning" onClick={() => navigate("/publish")}>
+              Publish Message
+            </Button>
+            <Button variant="info" onClick={() => navigate("/message-feed")}>
+              Message Feed
+            </Button>
+          </ButtonGroup>
         </Col>
       </Row>
     </Container>
-    // </div>
   );
 };
 

@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS, cross_origin
 from collections import defaultdict
 from flask_cors import CORS
 import requests
@@ -12,20 +11,27 @@ CORS(app)
 
 broker_id = None
 root_url = ''
-topics = set()
-messages = {}
+topics = {"topic1", "topic2"}
+messages = {
+    "msg1": {"message_id": "msg1", "topic": "topic1", "content": "Hello World from topic1!", "timestamp": 1650000000},
+    "msg2": {"message_id": "msg2", "topic": "topic2", "content": "Another message, from topic2.", "timestamp": 1650000600}
+}
+
 recent_propagate_messages = {}
-subscribers = {'abcde@123'}
-topic_subscribers = {'topic1':['abcde@123'], 'topic2': ['abcde@123']}
+subscribers = {
+    "sub1": {"callback_url": "http://127.0.0.1:8000/enqueue", "message_ids": {"msg1", "msg2"}},
+    "sub2": {"callback_url": "http://127.0.0.1:8001/enqueue", "message_ids": {"msg2"}}
+}
+
+topic_subscribers = defaultdict(set, {
+    "topic1": {"sub1"},
+    "topic2": {"sub1", "sub2"}
+})
 broker_endpoints = {}
 local_timestamp = 0
 
-
-
-@app.route('/create_topic', methods=['POST'])
-def create_topic():
-    data = request.get_json()
-    topic = data['topic']
+@app.route('/create_topic/<topic>', methods=['POST'])
+def create_topic(topic):
     if topic in topics:
         return jsonify({'error': 'Topic already exists'}), 400
     topics.add(topic)
@@ -41,7 +47,6 @@ def get_topics():
 def subscribe():
     global local_timestamp
     data = request.get_json()
-    print(data)
     if not data:
         return jsonify({'error': 'no json found'}), 400
     local_timestamp = max(local_timestamp, data['timestamp']) + 1
@@ -49,7 +54,8 @@ def subscribe():
     if topic not in topics:
         return jsonify({'error': 'Topic does not exist'}), 404
     # create a new subscriber
-    sub_id = data['email']
+    topic = data['topic']
+    sub_id = data['sub_id']
     # empty string
     if not sub_id:
         # should comese with a sub_id
@@ -60,11 +66,8 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
-@app.route('/get_subscribed_topics', methods=['GET'])
-@cross_origin()
-def get_subscribed_topics():
-    sub_id = request.args.get('email')
-    lst = []
+@app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
+def get_subscribed_topics(sub_id):
     lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
     return jsonify({'subscribed_topics': lst}), 200
 
@@ -118,15 +121,20 @@ def propagate(topic):
     print(f"Message {message_id} has been propagated at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'message_id': message_id}), 200
 
-@app.route('/get_missed_messages', methods=['GET'])
-def get_missed_messages():
-    data = request.get_json()
-    sub_id = data['sub_id']
+@app.route('/get_missed_messages/<sub_id>', methods=['GET'])
+def get_missed_messages(sub_id):
+    # data = request.get_json()
+    # sub_id = request.args.get('sub_id')
+    # sub_id = data['sub_id']
     if sub_id not in subscribers:
         return jsonify({'error': 'Subscriber does not exist'}), 404
-    for message_id in subscribers[sub_id]['message_ids']:
+    message_ids_copy = subscribers[sub_id]['message_ids'].copy()
+
+    messages_list = [messages[message_id] for message_id in subscribers[sub_id]['message_ids'] if message_id in messages]
+
+    for message_id in message_ids_copy:
         send_to_subscriber(sub_id, message_id)
-    return jsonify({'sub_id': sub_id, 'message_ids': list(subscribers[sub_id]['message_ids'])}), 200
+    return jsonify({'sub_id': sub_id, 'messages': messages_list}), 200
     
     
 
