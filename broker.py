@@ -66,8 +66,20 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
+<<<<<<< HEAD
 @app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
 def get_subscribed_topics(sub_id):
+||||||| d4fa994
+@app.route('/get_subscribed_topics', methods=['GET'])
+@cross_origin()
+def get_subscribed_topics():
+    sub_id = request.args.get('email')
+    lst = []
+=======
+
+@app.route('/get_subscribed_topics/<sub_id>', methods=['GET'])
+def get_subscribed_topics(sub_id):
+>>>>>>> 0eeda9fdc694df06abd2b3e0f3a5462fbd6a16c2
     lst = [topic for topic in topic_subscribers if sub_id in topic_subscribers[topic]]
     return jsonify({'subscribed_topics': lst}), 200
 
@@ -221,4 +233,11 @@ if __name__ == '__main__':
     # set up broker_endpoints
     broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
     broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'
+<<<<<<< HEAD
     app.run(port=broker_id, debug=False)
+||||||| d4fa994
+    app.run(port=broker_id, debug=False)
+=======
+
+    app.run(port=broker_id, debug=True)
+>>>>>>> 0eeda9fdc694df06abd2b3e0f3a5462fbd6a16c2
