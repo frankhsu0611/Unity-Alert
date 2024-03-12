@@ -13,7 +13,7 @@ local_timestamp = 0
 sub_id = ""
 sub_port = ""
 callback_url = ""
-broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
+broker_urls = ["http://127.0.0.1:5000", "http://127.0.0.1:5001"]
 info = {}
 txt_filename = ""
 
@@ -44,71 +44,79 @@ def register():
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic(topic):
     global local_timestamp
-    local_timestamp += 1
-    url = f"{broker_url}/subscribe"
-    try:
-        headers = {'Content-Type': 'application/json'}
-        payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code == 200:
-            return response
-        else:
-            print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
-            return response
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        local_timestamp += 1
+        url = f"{broker_url}/subscribe"
+        try:
+            headers = {'Content-Type': 'application/json'}
+            payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code == 200:
+                return response
+            else:
+                print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
+                return response
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
 @app.route('/c_create_topic', methods=['POST'])
 def create_topic(topic):
     global local_timestamp
-    local_timestamp += 1
-    try:
-        response = requests.post(f"{broker_url}/create_topic/{topic}")
-        if response.status_code == 200:
-            print(f"Topic {response.json()['topic']} created successfully.")
-            return response
-        else:
-            print(f"Failed to create topic. Status code: {response.status_code}, Message: {response.json()['error']}")
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        local_timestamp += 1
+        try:
+            response = requests.post(f"{broker_url}/create_topic/{topic}")
+            if response.status_code == 200:
+                print(f"Topic {response.json()['topic']} created successfully.")
+                return response
+            else:
+                print(f"Failed to create topic. Status code: {response.status_code}, Message: {response.json()['error']}")
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
 @app.route('/c_publish', methods=['POST'])
 def publish_to_topic(topic, content):
     global local_timestamp
-    try:
-        local_timestamp += 1
-        response = requests.post(f"{broker_url}/publish/{topic}", json={'timestamp': local_timestamp, 'content': content})
-        if response.status_code == 200:
-            print(f"Message published to topic {response.json()['topic']} with message ID {response.json()['message_id']}.")
-            return response
-        else:
-            print(f"Failed to publish message. Status code: {response.status_code}, Message: {response.json()['error']}")
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    brokers_tried = 0
+    for broker_url in broker_urls:
+        try:
+            local_timestamp += 1
+            brokers_tried += 1
+            response = requests.post(f"{broker_url}/publish/{topic}", json={'timestamp': local_timestamp, 'content': content})
+            if response.status_code == 200:
+                print(f"Message published to topic {response.json()['topic']} with message ID {response.json()['message_id']}.")
+                # return once the message is published to one broker
+                return response
+            else:
+                print(f"Failed to publish message. Status code: {response.status_code}, Message: {response.json()['error']}")
+        except requests.RequestException as e:
+            print(f"tried {brokers_tried}. An error occurred: {e}")
 
 @app.route('/c_get_topics', methods=['GET'])
 def get_topics():
-    try:
-        response = requests.get(f"{broker_url}/get_topics")
-        if response.status_code == 200:
-            print(f"Topics: {response.json()['topics']}")
-            return response
-        else:
-            print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        try:
+            response = requests.get(f"{broker_url}/get_topics")
+            if response.status_code == 200:
+                print(f"Topics: {response.json()['topics']}")
+                return response
+            else:
+                print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
 @app.route('/c_get_subscribed_topics', methods=['GET'])
 def get_subscribed_topic():
-    try:
-        response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
-        if response.status_code == 200:
-            print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
-            return response
-        else:
-            print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: {response.json()['error']}")
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        try:
+            response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
+            if response.status_code == 200:
+                print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
+                return response
+            else:
+                print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
@@ -124,36 +132,35 @@ def enqueue():
 @app.route('/c_get_missed', methods=['POST'])
 def get_missed():
     global local_timestamp
-    local_timestamp += 1
-    try:
-        response = requests.get(f"{broker_url}/get_missed_messages/{sub_id}")
-        if response.status_code == 200:
-            print(f"Missed messages received: {response.json()['message_ids']}")
-            return response
-        else:
-            print(f"Failed to get missed messages. Status code: {response.status_code}, Message: {response.json()['error']}")
-            return response
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        local_timestamp += 1
+        try:
+            response = requests.get(f"{broker_url}/get_missed_messages/{sub_id}")
+            if response.status_code == 200:
+                print(f"Missed messages received: {response.json()['message_ids']}")
+                return response
+            else:
+                print(f"Failed to get missed messages. Status code: {response.status_code}, Message: {response.json()['error']}")
+                return response
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
-def set_sub_id(uuid):
-    global sub_id
-    sub_id = uuid
 
 @app.route('/c_unsubscribe', methods=['POST'])
 def unsubscribe(topic):
     global local_timestamp
-    local_timestamp += 1
-    try:
-        response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
-        if response.status_code == 200:
-            print(f"Unsubscribed from topic {response.json()['topic']}.")
-            return response
-        else:
-            print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
-            return response
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
+    for broker_url in broker_urls:
+        local_timestamp += 1
+        try:
+            response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
+            if response.status_code == 200:
+                print(f"Unsubscribed from topic {response.json()['topic']}.")
+                return response
+            else:
+                print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
+                return response
+        except requests.RequestException as e:
+            print(f"An error occurred: {e}")
 
 def make_api_calls():  
     # Example usage
