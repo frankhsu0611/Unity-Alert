@@ -4,16 +4,20 @@ import threading
 from collections import defaultdict
 import uuid
 from flask_cors import CORS
+import argparse
 
 app = Flask(__name__)
 CORS(app)
 messages = {}
 local_timestamp = 0
-sub_id = str(uuid.uuid4())
-callback_url = "http://127.0.0.1:8000/enqueue"
+sub_id = ""
+sub_port = ""
+callback_url = ""
+broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
+info = {}
 
 @app.route('/c_subscribe', methods=['POST'])
-def subscribe_to_topic(broker_url, topic):
+def subscribe_to_topic(topic):
     global local_timestamp
     local_timestamp += 1
     url = f"{broker_url}/subscribe"
@@ -30,7 +34,7 @@ def subscribe_to_topic(broker_url, topic):
         print(f"An error occurred: {e}")
 
 @app.route('/c_create_topic', methods=['POST'])
-def create_topic(broker_url, topic):
+def create_topic(topic):
     global local_timestamp
     local_timestamp += 1
     try:
@@ -44,7 +48,7 @@ def create_topic(broker_url, topic):
         print(f"An error occurred: {e}")
 
 @app.route('/c_publish', methods=['POST'])
-def publish_to_topic(broker_url, topic, content):
+def publish_to_topic(topic, content):
     global local_timestamp
     try:
         local_timestamp += 1
@@ -58,7 +62,7 @@ def publish_to_topic(broker_url, topic, content):
         print(f"An error occurred: {e}")
 
 @app.route('/c_get_topics', methods=['GET'])
-def get_topics(broker_url):
+def get_topics():
     try:
         response = requests.get(f"{broker_url}/get_topics")
         if response.status_code == 200:
@@ -70,7 +74,7 @@ def get_topics(broker_url):
         print(f"An error occurred: {e}")
 
 @app.route('/c_get_subscribed_topics', methods=['GET'])
-def get_subscribed_topic(broker_url):
+def get_subscribed_topic():
     try:
         response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
         if response.status_code == 200:
@@ -92,8 +96,8 @@ def enqueue():
     print(f"Message {message_id} received. at timestamp {local_timestamp}")
     return jsonify({'message_id': message_id, 'status': 'received'}), 200
 
-@app.route('/c_get_missed', methods=['GET'])
-def get_missed(broker_url):
+@app.route('/c_get_missed', methods=['POST'])
+def get_missed():
     global local_timestamp
     data = request.get_json()
     local_timestamp = max(local_timestamp, data['timestamp']) + 1
@@ -108,35 +112,75 @@ def get_missed(broker_url):
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
 
-@app.route('/c_reset_sub_id/<uuid>', methods=['POST'])
 def set_sub_id(uuid):
     global sub_id
     sub_id = uuid
-    return jsonify({'sub_id': sub_id}), 200
-    
+
+@app.route('/c_unsubscribe', methods=['POST'])
+def unsubscribe(topic):
+    global local_timestamp
+    local_timestamp += 1
+    try:
+        response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
+        if response.status_code == 200:
+            print(f"Unsubscribed from topic {response.json()['topic']}.")
+            return response
+        else:
+            print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
+            return response
+    except requests.RequestException as e:
+        print(f"An error occurred: {e}")
 
 def make_api_calls():  
     # Example usage
-    broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
     topic1 = "example_topic1"
     topic2 = "example_topic2"
 
-    create_topic(broker_url, topic1)
-    create_topic(broker_url, topic2)
+    create_topic(topic1)
+    create_topic(topic2)
     # Try subscribing without specifying a subscriber ID (to test ID generation)
-    get_topics(broker_url)
-    response = subscribe_to_topic(broker_url, topic1)
+    get_topics()
+    response = subscribe_to_topic(topic1)
 
-    subscribe_to_topic(broker_url, topic2)
-    get_subscribed_topic(broker_url)
+    subscribe_to_topic(topic2)
+    get_subscribed_topic()
+    unsubscribe(topic2)
+    get_subscribed_topic()
     
-    publish_to_topic(broker_url, topic1, "Hello, world!")
+    publish_to_topic(topic1, "Hello, world!")
 
 def run_flask_app():
-    app.run(port = 8000, debug=False)
+    app.run(port = sub_port, debug=False)
     
 if __name__ == "__main__":
-    # Run Flask app in a separate thread
+    # Run Flask app in a separate thread   parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
+    parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
+    parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
+    # Parse command-line arguments
+    args = parser.parse_args()
+    # setup broker_id (port)
+    sub_port = args.port
+    callback_url = f'http://localhost:{sub_port}/enqueue'
+    
+    # init sub_id
+    sub_id = str(uuid.uuid4())
+    
+    #read info.txt to get user info
+    try:
+        with open('info.txt', 'r') as f:
+            lines = f.readlines()
+            # skip the first line
+            for line in lines[1:]:
+                line = line.strip()
+                if line:
+                    key, value = line.split()
+                    # replace the sub_id if specified
+                    if key == 'sub_id':    
+                        sub_id = value
+    except FileNotFoundError:
+        print("info.txt not found. Using auto-generated sub_id.")
+    
+    # run the flask app
     threading.Thread(target=run_flask_app).start()
     # Make API calls
     make_api_calls()
