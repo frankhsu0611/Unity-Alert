@@ -114,7 +114,7 @@ def get_subscribed_topic():
 def enqueue():
     global local_timestamp
     data = request.get_json()
-    local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    local_timestamp = local_timestamp + 1
     message = data['message']
     message_id = message['message_id']
     messages[message_id] = message
@@ -124,8 +124,7 @@ def enqueue():
 @app.route('/c_get_missed', methods=['POST'])
 def get_missed():
     global local_timestamp
-    data = request.get_json()
-    local_timestamp = max(local_timestamp, data['timestamp']) + 1
+    local_timestamp += 1
     try:
         response = requests.get(f"{broker_url}/get_missed_messages/{sub_id}")
         if response.status_code == 200:
