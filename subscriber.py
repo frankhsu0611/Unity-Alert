@@ -15,7 +15,19 @@ sub_port = ""
 callback_url = ""
 broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
 info = {}
+txt_filename = ""
 
+@app.route('/c_register', methods=['POST'])
+def register():
+    global local_timestamp
+    local_timestamp += 1
+    data = request.get_json()
+    # parse all data and store it into both info and txt_filename
+    sub_id = data['sub_id']
+    user_name = data['username']
+    for key, value in data.items():
+        info[key] = value
+    
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic(topic):
     global local_timestamp
