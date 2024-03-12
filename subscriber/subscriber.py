@@ -20,13 +20,26 @@ txt_filename = ""
 @app.route('/c_register', methods=['POST'])
 def register():
     global local_timestamp
+    global sub_id
     local_timestamp += 1
     data = request.get_json()
     # parse all data and store it into both info and txt_filename
-    sub_id = data['sub_id']
-    user_name = data['username']
+    if not data:
+        return jsonify({'error': 'No data received.'}), 400
+    if not data['username']:
+        return jsonify({'error': 'No username received.'}), 400
+    # store the data into info
     for key, value in data.items():
         info[key] = value
+    # write to the file
+    txt_filename = info['username'] + '.txt'
+    with open(txt_filename, 'w') as f:
+        f.write(f'key value\n')
+        for key, value in info.items():
+            f.write(f"{key} {value}\n")
+    sub_id = str(uuid.uuid4())
+    info['sub_id'] = sub_id
+    
     
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic(topic):
@@ -168,18 +181,20 @@ if __name__ == "__main__":
     # Run Flask app in a separate thread   parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
+    parser.add_argument('--username', type=str, default='default_user', help='Username to use for the subscriber.')
     # Parse command-line arguments
     args = parser.parse_args()
-    # setup broker_id (port)
     sub_port = args.port
+    info['username'] = args.username
+    if info['username'] == 'default_user':
+        # generate a random uuid
+        sub_id = str(uuid.uuid4())
+        info['sub_id'] = sub_id
     callback_url = f'http://localhost:{sub_port}/enqueue'
     
-    # init sub_id
-    sub_id = str(uuid.uuid4())
-    
-    #read info.txt to get user info
+    #read {username}.txt to get user info
     try:
-        with open('info.txt', 'r') as f:
+        with open(f"{info['username']}.txt", 'r') as f:
             lines = f.readlines()
             # skip the first line
             for line in lines[1:]:
@@ -190,7 +205,9 @@ if __name__ == "__main__":
                     if key == 'sub_id':    
                         sub_id = value
     except FileNotFoundError:
-        print("info.txt not found. Using auto-generated sub_id.")
+        print("userfile not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
     
     # run the flask app
     threading.Thread(target=run_flask_app).start()

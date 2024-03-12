@@ -1,4 +1,0 @@
-name value
-sub_id 123
-email abc@gmail.com
-username Arch
