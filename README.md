@@ -25,3 +25,13 @@ safety culture. The report delves into the problem landscape,
 the motivation behind the project, a review of existing solutions,
 and a detailed account of the proposed solution’s architecture,
 algorithms, and expected impact on enhancing community safety
+
+
+**Project Architecture**
+![p1](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/5394fdae-c985-40cb-91c2-662a6d4649e1)
+![p2](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/d3f214d5-9cad-41d5-91a0-f33abf4bbdeb)
+
+![p3](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/47a95a26-24c5-4f5d-96fc-099bb40707b9)
+
+![p4](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/881205cc-d40b-4e93-acdb-63992b6a6b23)
+
