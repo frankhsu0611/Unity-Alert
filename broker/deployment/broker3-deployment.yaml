@@ -1,0 +1,33 @@
+# Broker3 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broker3
+  template:
+    metadata:
+      labels:
+        app: broker3
+    spec:
+      containers:
+        - name: broker3
+          image: your-docker-hub-username/unity-alert-broker2:latest
+          ports:
+            - containerPort: 5002
+---
+# Broker3 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker3-service
+spec:
+  selector:
+    app: broker3
+  ports:
+    - protocol: TCP
+      port: 5002
+      targetPort: 5002
