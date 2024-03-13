@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: broker1
-          image: broker-image:latest
+          image: gurpreets1/unity-alert-kubernetes-deployment-broker1:1.0.0
           ports:
             - containerPort: 5000
 
