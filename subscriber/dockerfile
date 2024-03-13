@@ -10,12 +10,8 @@ COPY . .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir flask flask_cors requests
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
-
 # Define environment variable
 ENV FLASK_APP=subscriber.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
-# The CMD command is updated to use the Python command directly, which allows us to pass arguments more flexibly.
-CMD ["python3", "subscriber.py", "--port", "8000"]
+# The CMD command is removed to allow docker-compose to specify the command and arguments, including the port.

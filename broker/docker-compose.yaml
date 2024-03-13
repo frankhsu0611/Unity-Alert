@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  broker1:
+    build: .
+    command: python3 broker.py --port 5000
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_RUN_HOST=0.0.0.0
+
+  broker2:
+    build: .
+    command: python3 broker.py --port 5001
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_RUN_HOST=0.0.0.0
+
+  broker3:
+    build: .
+    command: python3 broker.py --port 5002
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_RUN_HOST=0.0.0.0

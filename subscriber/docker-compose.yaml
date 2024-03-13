@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  subscriber1:
+    build: .
+    command: python3 subscriber.py --port 8000
+    ports:
+      - "8000:8000"
+
+  subscriber2:
+    build: .
+    command: python3 subscriber.py --port 8001
+    ports:
+      - "8001:8001"
