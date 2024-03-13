@@ -15,12 +15,26 @@ sub_id = ""
 sub_port = ""
 callback_url = ""
 broker_url = "http://127.0.0.1:5000"  # Change this to the actual base URL of your Flask app
-info = {}
+info = defaultdict()
+
+@app.route('/c_register', methods=['POST'])
+def register_user():
+    global sub_id
+    global info
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email') 
+    sub_id = str(uuid.uuid4())
+    # Optionally, store the UUID in your database associated with user details
+    info[sub_id] = {"email": email, "username": username}
+    return jsonify({'user_uuid': sub_id}), 200
 
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic():
+    global info
     data = request.get_json()
     topic = data['topic']
+    sub_id = data['sub_id']
     global local_timestamp
     local_timestamp += 1
     url = f"{broker_url}/subscribe"
@@ -93,12 +107,15 @@ def get_topics():
 @app.route('/c_get_subscribed_topics', methods=['GET'])
 def get_subscribed_topic():
     try:
-        response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
+        data = request.get_json()
+        sub_id = data['sub_id']
+        response = requests.get(f"{broker_url}/get_subscribed_topics", json={'sub_id': sub_id})
         if response.status_code == 200:
             print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
-            return response
+            return jsonify(response.json()), 200
         else:
             print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+            return jsonify({'error': 'Failed to get subscribed topics'}), response.status_code
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
         return jsonify({'error': 'An error occurred while getting subscribed topics'}), 500
@@ -117,8 +134,6 @@ def enqueue():
 @app.route('/c_get_missed', methods=['GET'])
 def get_missed():
     global local_timestamp
-    # data = 
-    sub_id = request.args.get('sub_id')
     timestamp = request.args.get('timestamp', default=0, type=int)
     local_timestamp = max(local_timestamp, timestamp) + 1
     if not sub_id:
@@ -140,19 +155,23 @@ def set_sub_id(uuid):
     sub_id = uuid
 
 @app.route('/c_unsubscribe', methods=['POST'])
-def unsubscribe(topic):
+def unsubscribe():
+    data = request.get_json()
+    topic = data['topic']
+    sub_id = data['sub_id']
     global local_timestamp
     local_timestamp += 1
     try:
         response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
         if response.status_code == 200:
             print(f"Unsubscribed from topic {response.json()['topic']}.")
-            return response
+            return jsonify(response.json()), 200
         else:
             print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
-            return response
+            return jsonify(response.json()), response.status_code
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
+        return jsonify({'error': 'An error occurred while unsubscribing'}), 500
 
 # def make_api_calls():  
 #     # Example usage

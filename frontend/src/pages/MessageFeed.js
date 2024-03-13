@@ -5,13 +5,13 @@ import backgroundImage from "../wallpaper.png";
 
 const MessageFeed = () => {
   const [messages, setMessages] = useState([]);
-  const sub_id = "sub1"; // This should ideally come from a user's session or authentication context
+//   const sub_id = "sub1"; // This should ideally come from a user's session or authentication context
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/c_get_missed`, {
-          params: { sub_id: sub_id, timestamp: Date.now() },
+          params: { timestamp: Date.now() },
         });
         if (response.data && response.data.messages) {
           // Create a map of existing message IDs for quick lookup

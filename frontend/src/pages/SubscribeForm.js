@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Form, Container, Button, Alert, Card } from "react-bootstrap";
+import { Form, Container, Button, Alert, Card, Row, Col } from "react-bootstrap";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
+import NavBar from "./NavBar";
 
-const SubscribeForm = (props) => {
-  const [email, setEmail] = useState("");
+const SubscribeForm = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [message, setMessage] = useState("");
   const [topics, setTopics] = useState([]);
@@ -26,11 +26,6 @@ const SubscribeForm = (props) => {
       });
   }, []);
 
-  const handleEmailChange = (e) => {
-    setMessage("");
-    setEmail(e.target.value);
-  };
-
   const handleTopicChange = (e) => {
     setMessage("");
     setSelectedTopic(e.target.value);
@@ -42,7 +37,6 @@ const SubscribeForm = (props) => {
     // Send subscription request using Axios
     axios
       .post("http://127.0.0.1:8000/c_subscribe", {
-        email: email,
         topic: selectedTopic,
         timestamp: Date.now(),
       })
@@ -55,7 +49,6 @@ const SubscribeForm = (props) => {
             text: `Subscribed to ${selectedTopic} successfully.`,
             variant: "success",
           });
-          setEmail("");
           setSelectedTopic("");
         } else {
           // Handle error
@@ -76,11 +69,6 @@ const SubscribeForm = (props) => {
       });
   };
 
-  const handleFormClick = () => {
-    // Clear the alert message when the form is clicked
-    setMessage("");
-  };
-
   return (
     <Container
       fluid
@@ -90,6 +78,7 @@ const SubscribeForm = (props) => {
         backgroundSize: "cover",
       }}
     >
+        <NavBar />
       <Card
         bg="dark"
         text="white"
@@ -100,15 +89,6 @@ const SubscribeForm = (props) => {
         <Card.Body>
           {message && <Alert variant={message.variant}>{message.text}</Alert>}
           <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter email"
-                value={email}
-                onChange={handleEmailChange}
-              />
-            </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Select Topic</Form.Label>
               <Form.Select

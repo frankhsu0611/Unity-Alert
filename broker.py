@@ -66,8 +66,8 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
-@app.route('/unsubscribe/', methods=['POST'])
-def unsubscribe():
+@app.route('/unsubscribe', methods=['POST'])
+def unsubscribe(sub_id, topic):
     global local_timestamp
     data = request.get_json()
     if not data:

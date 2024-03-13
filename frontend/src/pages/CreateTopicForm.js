@@ -4,13 +4,8 @@ import axios from "axios";
 import backgroundImage from "../wallpaper.png";
 
 const CreateTopicForm = (props) => {
-  const [email, setEmail] = useState("");
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
 
   const handleTopicChange = (e) => {
     setMessage("");
@@ -21,7 +16,6 @@ const CreateTopicForm = (props) => {
     e.preventDefault();
     axios
       .post("http://127.0.0.1:8000/c_create_topic", {
-        email: email,
         topic: topic,
         timestamp: Date.now(),
       })
@@ -34,7 +28,6 @@ const CreateTopicForm = (props) => {
             text: `${topic} Topic created successfully.`,
             variant: "success",
           });
-          setEmail("");
           setTopic("");
         } else {
           // Handle error
@@ -43,8 +36,6 @@ const CreateTopicForm = (props) => {
             text: `Failed to add topic. Please try again.`,
             variant: "danger",
           });
-          //   setEmail("");
-          // setTopic("");
         }
       })
       .catch((error) => {
@@ -77,22 +68,9 @@ const CreateTopicForm = (props) => {
         className="w-100"
         style={{ maxWidth: "50%", padding: "20px", borderRadius: "15px" }}
       >
-        {message && <Alert variant={message.variant}>{message.text}</Alert>}
         <Card.Header>Create a Topic</Card.Header>
         <Card.Body>
           <Form onSubmit={handleSubmit} onClick={handleFormClick}>
-            <Form.Group className="mb-3">
-              <Form.Label>Email address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter email"
-                onChange={handleEmailChange}
-              />
-            </Form.Group>
-            {/* <Form.Group className="mb-3">
-          <Form.Label>Password</Form.Label>
-          <Form.Control type="password" placeholder="Password" />
-        </Form.Group> */}
             <Form.Group className="mb-3">
               <Form.Control
                 type="text"
@@ -106,6 +84,7 @@ const CreateTopicForm = (props) => {
             </Button>
           </Form>
         </Card.Body>
+        {message && <Alert variant={message.variant}>{message.text}</Alert>}
       </Card>
     </Container>
   );
