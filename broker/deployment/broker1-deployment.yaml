@@ -22,7 +22,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: broker1-service
+  name: broker1
 spec:
   selector:
     app: broker1

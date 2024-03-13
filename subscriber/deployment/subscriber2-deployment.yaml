@@ -24,7 +24,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: subscriber2-service
+  name: subscriber2
 spec:
   selector:
     app: subscriber2
