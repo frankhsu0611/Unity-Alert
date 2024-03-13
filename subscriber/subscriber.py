@@ -263,4 +263,4 @@ if __name__ == "__main__":
     # run the flask app
     threading.Thread(target=run_flask_app).start()
     # Make API calls
-    #make_api_calls()
+    make_api_calls()

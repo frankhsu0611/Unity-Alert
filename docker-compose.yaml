@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  broker1:
+    build: /broker
+    command: python3 broker.py --port 5000
+    ports:
+      - "5000:5000"
+    networks:
+      - shared_network
+
+  broker2:
+    build: /broker
+    command: python3 broker.py --port 5001
+    ports:
+      - "5001:5001"
+    networks:
+      - shared_network
+
+  broker3:
+    build: /broker
+    command: python3 broker.py --port 5002
+    ports:
+      - "5002:5002"
+    networks:
+      - shared_network
+
+  subscriber1:
+    build: /subscriber
+    command: python3 subscriber.py --port 8000
+    ports:
+      - "8000:8000"
+    networks:
+      - shared_network
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+
+  subscriber2:
+    build: /subscriber
+    command: python3 subscriber.py --port 8001
+    ports:
+      - "8001:8001"
+    networks:
+      - shared_network
+    depends_on:
+      - broker1
+      - broker2
+      - broker3
+
+networks:
+  shared_network:
+    driver: bridge

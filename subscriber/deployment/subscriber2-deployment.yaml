@@ -1,0 +1,34 @@
+# Subscriber2 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscriber2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscriber2
+  template:
+    metadata:
+      labels:
+        app: subscriber2
+    spec:
+      containers:
+        - name: subscriber2
+          image: your-docker-hub-username/unity-alert-subscriber1:latest
+          ports:
+            - containerPort: 8001
+
+---
+# Subscriber1 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscriber2
+spec:
+  selector:
+    app: subscriber2
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001

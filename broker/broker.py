@@ -232,4 +232,4 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"Failed to read neighbor broker file. Error: {e}")
     print(f"Taking to neighbor brokers: {broker_endpoints}")
-    app.run(port=broker_id, debug=True)
+    app.run(host='0.0.0.0', port=broker_id)
