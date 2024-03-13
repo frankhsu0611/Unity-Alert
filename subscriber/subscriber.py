@@ -44,6 +44,8 @@ def register():
 @app.route('/c_subscribe', methods=['POST'])
 def subscribe_to_topic(topic):
     global local_timestamp
+    successful_brokers = []
+    failed_brokers = []
     for broker_url in broker_urls:
         local_timestamp += 1
         url = f"{broker_url}/subscribe"
@@ -52,27 +54,32 @@ def subscribe_to_topic(topic):
             payload = {'callback_url': callback_url, 'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id}
             response = requests.post(url, headers=headers, json=payload)
             if response.status_code == 200:
-                return response
+                successful_brokers.append(broker_url)
             else:
+                failed_brokers.append(broker_url)
                 print(f"Failed to subscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
-                return response
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+    return jsonify({'subscribed_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_create_topic', methods=['POST'])
 def create_topic(topic):
     global local_timestamp
+    successful_brokers = []
+    failed_brokers = []
     for broker_url in broker_urls:
         local_timestamp += 1
         try:
             response = requests.post(f"{broker_url}/create_topic/{topic}")
             if response.status_code == 200:
-                print(f"Topic {response.json()['topic']} created successfully.")
-                return response
+                successful_brokers.append(broker_url)
+                print(f"Topic {response.json()['topic']} created successfully at {broker_url}.")
             else:
-                print(f"Failed to create topic. Status code: {response.status_code}, Message: {response.json()['error']}")
+                failed_brokers.append(broker_url)
+                print(f"Failed to create topic at {broker_url} Status code: {response.status_code}")
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+    return jsonify({'created_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_publish', methods=['POST'])
 def publish_to_topic(topic, content):
@@ -132,53 +139,62 @@ def enqueue():
 @app.route('/c_get_missed', methods=['POST'])
 def get_missed():
     global local_timestamp
+    successful_brokers = []
+    failed_brokers = []
     for broker_url in broker_urls:
         local_timestamp += 1
         try:
             response = requests.get(f"{broker_url}/get_missed_messages/{sub_id}")
             if response.status_code == 200:
-                print(f"Missed messages received: {response.json()['message_ids']}")
-                return response
+                successful_brokers.append(broker_url)
+                print(f'Noticed broker: {broker_url} successfully.')
             else:
-                print(f"Failed to get missed messages. Status code: {response.status_code}, Message: {response.json()['error']}")
-                return response
+                failed_brokers.append(broker_url)
+                print(f'Noticed broker: {broker_url} failied.')
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+    return jsonify({'status': 'noticed', 'successful_brokers':successful_brokers, 'failed_brokers': failed_brokers}), 200
+    
 
 
 @app.route('/c_unsubscribe', methods=['POST'])
 def unsubscribe(topic):
     global local_timestamp
+    successful_brokers = []
+    failed_brokers = []
     for broker_url in broker_urls:
         local_timestamp += 1
         try:
             response = requests.post(f"{broker_url}/unsubscribe", json={'timestamp': local_timestamp, 'topic': topic, 'sub_id': sub_id})
             if response.status_code == 200:
                 print(f"Unsubscribed from topic {response.json()['topic']}.")
-                return response
+                successful_brokers.append(broker_url)
             else:
+                failed_brokers.append(broker_url)
                 print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
                 return response
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+    return jsonify({'unsubscribed_topics': topic, 'successful_brokers': successful_brokers,'failed_brokers': failed_brokers}), 200
 
 def make_api_calls():  
     # Example usage
-    topic1 = "example_topic1"
-    topic2 = "example_topic2"
+    with app.app_context():
+        topic1 = "example_topic1"
+        topic2 = "example_topic2"
 
-    create_topic(topic1)
-    create_topic(topic2)
-    # Try subscribing without specifying a subscriber ID (to test ID generation)
-    get_topics()
-    response = subscribe_to_topic(topic1)
+        create_topic(topic1)
+        create_topic(topic2)
+        # Try subscribing without specifying a subscriber ID (to test ID generation)
+        get_topics()
+        response = subscribe_to_topic(topic1)
 
-    subscribe_to_topic(topic2)
-    get_subscribed_topic()
-    unsubscribe(topic2)
-    get_subscribed_topic()
-    
-    publish_to_topic(topic1, "Hello, world!")
+        subscribe_to_topic(topic2)
+        get_subscribed_topic()
+        unsubscribe(topic2)
+        get_subscribed_topic()
+        
+        publish_to_topic(topic1, "Hello, world!")
 
 def run_flask_app():
     app.run(port = sub_port, debug=False)
