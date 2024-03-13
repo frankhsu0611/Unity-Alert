@@ -136,6 +136,7 @@ def get_missed_messages():
     if sub_id not in subscribers:
         return jsonify({'error': 'Subscriber does not exist'}), 404
     for message_id in subscribers[sub_id]['message_ids']:
+        print(f"Sending missed message {message_id} to subscriber {sub_id}.")
         send_to_subscriber(sub_id, message_id)
     return jsonify({'sub_id': sub_id, 'message_ids': list(subscribers[sub_id]['message_ids'])}), 200
     
@@ -143,6 +144,7 @@ def get_missed_messages():
 
 # broker functions
 def send_to_subscriber(sub_id, message_id):
+    print('send to subscriber', subscribers[sub_id]['callback_url'])
     if sub_id not in subscribers:
         print(f"Subscriber {sub_id} does not exist.")
         return False
