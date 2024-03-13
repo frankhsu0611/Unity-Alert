@@ -10,20 +10,21 @@ const MessageFeed = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/c_get_missed`, {
-          params: { timestamp: Date.now() },
-        });
+        const response = await axios.get(`http://127.0.0.1:8000/c_get_messages`);
         if (response.data && response.data.messages) {
           // Create a map of existing message IDs for quick lookup
-          const existingMessageIds = new Set(messages.map((msg) => msg.id)); // Assuming each message has a unique 'id'
 
-          // Filter out any messages that are already in the state
-          const newMessages = response.data.messages.filter(
-            (msg) => !existingMessageIds.has(msg.id)
-          );
 
-          // Append new messages to the existing messages state
-          setMessages((prevMessages) => [...prevMessages, ...newMessages]);
+          // const existingMessageIds = new Set(messages.map((msg) => msg.id)); // Assuming each message has a unique 'id'
+
+          // // Filter out any messages that are already in the state
+          // const newMessages = response.data.messages.filter(
+          //   (msg) => !existingMessageIds.has(msg.id)
+          // );
+
+          // // Append new messages to the existing messages state
+          // setMessages((prevMessages) => [...prevMessages, ...newMessages]);
+          setMessages(response.data.messages);
         } else {
           console.error("Unexpected response structure:", response.data);
         }
@@ -56,15 +57,15 @@ const MessageFeed = () => {
         <Card.Header>Message Feed</Card.Header>
         <Card.Body>
           <ListGroup>
-            {messages.map((message, index) => (
-              <ListGroup.Item key={index}>
+            {messages.map((message) => (
+              <ListGroup.Item key={message}>
                 <Card>
                   <Card.Body>
-                    <Card.Title>{message.topic}</Card.Title>
-                    <Card.Text>{message.content}</Card.Text>
-                    <Card.Footer className="text-muted">
+                    {/* <Card.Title>{message.topic}</Card.Title> */}
+                    <Card.Text>{message}</Card.Text>
+                    {/* <Card.Footer className="text-muted">
                       Sent at {new Date(message.timestamp).toLocaleString()}
-                    </Card.Footer>
+                    </Card.Footer> */}
                   </Card.Body>
                 </Card>
               </ListGroup.Item>

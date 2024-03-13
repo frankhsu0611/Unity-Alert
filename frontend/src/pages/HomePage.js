@@ -25,7 +25,7 @@ const HomePage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    axios.post('http://127.0.0.1:8000/c_register', { username, email })
+    axios.post('http://127.0.0.1:8000/c_register', { 'username':username, 'email':email })
     .then((response) => {
       const { user_uuid } = response.data;
       setUUID(user_uuid);
