@@ -223,7 +223,13 @@ if __name__ == '__main__':
     broker_id = args.port
     root_url = f'http://localhost:{args.port}'
                     
-    # set up broker_endpoints
-    broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
-    broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'
+    # read neighbor_broker_{port}.txt to get broker_endpoints
+    try:
+        with open(f'neighbor_broker_{broker_id}.txt', 'r') as file:
+            for line in file:
+                key, value = line.strip().split(' ')
+                broker_endpoints[key] = value
+    except Exception as e:
+        print(f"Failed to read neighbor broker file. Error: {e}")
+    print(f"Taking to neighbor brokers: {broker_endpoints}")
     app.run(port=broker_id, debug=True)
