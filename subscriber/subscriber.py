@@ -39,11 +39,14 @@ def register():
             f.write(f"{key} {value}\n")
     sub_id = str(uuid.uuid4())
     info['sub_id'] = sub_id
+    return jsonify({'sub_id': sub_id, 'status': 'registered'}), 200
     
     
 @app.route('/c_subscribe', methods=['POST'])
-def subscribe_to_topic(topic):
+def subscribe_to_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
     successful_brokers = []
     failed_brokers = []
     for broker_url in broker_urls:
@@ -63,8 +66,10 @@ def subscribe_to_topic(topic):
     return jsonify({'subscribed_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_create_topic', methods=['POST'])
-def create_topic(topic):
+def create_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
     successful_brokers = []
     failed_brokers = []
     for broker_url in broker_urls:
@@ -82,8 +87,11 @@ def create_topic(topic):
     return jsonify({'created_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_publish', methods=['POST'])
-def publish_to_topic(topic, content):
+def publish_to_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
+    content = data['content']
     brokers_tried = 0
     for broker_url in broker_urls:
         try:
@@ -93,24 +101,32 @@ def publish_to_topic(topic, content):
             if response.status_code == 200:
                 print(f"Message published to topic {response.json()['topic']} with message ID {response.json()['message_id']}.")
                 # return once the message is published to one broker
-                return response
+                return jsonify({'topic': response.json()['topic'], 'message_id': response.json()['message_id']}), 200
             else:
                 print(f"Failed to publish message. Status code: {response.status_code}, Message: {response.json()['error']}")
+                return jsonify({'error': f"Failed to publish message. Status code: {response.status_code}"}), 500
         except requests.RequestException as e:
             print(f"tried {brokers_tried}. An error occurred: {e}")
+
+@app.route('/c_get_messages', methods=['GET'])
+def get_messages():
+    return jsonify({'messages': [m['content'] for m in messages.values()]}), 200
 
 @app.route('/c_get_topics', methods=['GET'])
 def get_topics():
     for broker_url in broker_urls:
         try:
             response = requests.get(f"{broker_url}/get_topics")
+            print('this is res',response)
             if response.status_code == 200:
                 print(f"Topics: {response.json()['topics']}")
-                return response
+                return jsonify({'topics': response.json()['topics']}), 200
             else:
                 print(f"Failed to get topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+                return jsonify({'error': f"Failed to get topics. Status code: {response.status_code}"}), 500
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+            return jsonify({'error': f"An error occurred: {e}"}), 500
 
 @app.route('/c_get_subscribed_topics', methods=['GET'])
 def get_subscribed_topic():

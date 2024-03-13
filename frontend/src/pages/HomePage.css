@@ -1,0 +1,48 @@
+/* HomePage.css
+.homepage-container {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+  }
+  
+  .background-image {
+    background-image: url('../wallpaper1.jpeg');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    position: relative;
+  }
+  
+  .card-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .card {
+    width: 80%;
+    max-width: 800px;
+  }
+  
+  .card-body {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .accordion-item {
+    flex: 1;
+    cursor: pointer;
+    padding: 20px;
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
+  }
+  
+  .accordion-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .accordion-item.active {
+    background-color: #f0f0f0;
+  }
+   */
