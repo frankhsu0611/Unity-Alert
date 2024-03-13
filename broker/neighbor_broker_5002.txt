@@ -1,0 +1,2 @@
+5000 http://broker1:5000
+5001 http://broker2:5001
