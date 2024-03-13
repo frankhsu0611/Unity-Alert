@@ -42,8 +42,10 @@ def register():
     
     
 @app.route('/c_subscribe', methods=['POST'])
-def subscribe_to_topic(topic):
+def subscribe_to_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
     successful_brokers = []
     failed_brokers = []
     for broker_url in broker_urls:
@@ -63,8 +65,10 @@ def subscribe_to_topic(topic):
     return jsonify({'subscribed_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_create_topic', methods=['POST'])
-def create_topic(topic):
+def create_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
     successful_brokers = []
     failed_brokers = []
     for broker_url in broker_urls:
@@ -82,8 +86,11 @@ def create_topic(topic):
     return jsonify({'created_topics': topic, 'successful_brokers': successful_brokers, 'failed_brokers': failed_brokers}), 200
 
 @app.route('/c_publish', methods=['POST'])
-def publish_to_topic(topic, content):
+def publish_to_topic():
     global local_timestamp
+    data = request.get_json()
+    topic = data['topic']
+    content = data['content']
     brokers_tried = 0
     for broker_url in broker_urls:
         try:
