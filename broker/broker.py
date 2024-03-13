@@ -11,22 +11,11 @@ CORS(app)
 
 broker_id = None
 root_url = ''
-topics = {"topic1", "topic2"}
-messages = {
-    "msg1": {"message_id": "msg1", "topic": "topic1", "content": "Hello World from topic1!", "timestamp": 1650000000},
-    "msg2": {"message_id": "msg2", "topic": "topic2", "content": "Another message, from topic2.", "timestamp": 1650000600}
-}
-
+topics = set()
+messages = {}
 recent_propagate_messages = {}
-subscribers = {
-    "sub1": {"callback_url": "http://127.0.0.1:8000/enqueue", "message_ids": {"msg1", "msg2"}},
-    "sub2": {"callback_url": "http://127.0.0.1:8001/enqueue", "message_ids": {"msg2"}}
-}
-
-topic_subscribers = defaultdict(set, {
-    "topic1": {"sub1"},
-    "topic2": {"sub1", "sub2"}
-})
+subscribers = {}
+topic_subscribers = defaultdict(set)
 broker_endpoints = {}
 local_timestamp = 0
 
@@ -66,8 +55,8 @@ def subscribe():
     print(f"Subscriber {sub_id} has been subscribed to topic {topic} at timestamp {local_timestamp}.")
     return jsonify({'topic': topic,'broker_url':root_url, 'sub_id': sub_id}), 200
 
-@app.route('/unsubscribe', methods=['POST'])
-def unsubscribe(sub_id, topic):
+@app.route('/unsubscribe/', methods=['POST'])
+def unsubscribe():
     global local_timestamp
     data = request.get_json()
     if not data:
@@ -140,25 +129,22 @@ def propagate(topic):
     print(f"Message {message_id} has been propagated at timestamp {local_timestamp}.")
     return jsonify({'topic': topic, 'message_id': message_id}), 200
 
-@app.route('/get_missed_messages/<sub_id>', methods=['GET'])
-def get_missed_messages(sub_id):
-    # data = request.get_json()
-    # sub_id = request.args.get('sub_id')
-    # sub_id = data['sub_id']
+@app.route('/get_missed_messages', methods=['GET'])
+def get_missed_messages():
+    data = request.get_json()
+    sub_id = data['sub_id']
     if sub_id not in subscribers:
         return jsonify({'error': 'Subscriber does not exist'}), 404
-    message_ids_copy = subscribers[sub_id]['message_ids'].copy()
-
-    messages_list = [messages[message_id] for message_id in subscribers[sub_id]['message_ids'] if message_id in messages]
-
-    for message_id in message_ids_copy:
+    for message_id in subscribers[sub_id]['message_ids']:
+        print(f"Sending missed message {message_id} to subscriber {sub_id}.")
         send_to_subscriber(sub_id, message_id)
-    return jsonify({'sub_id': sub_id, 'messages': messages_list}), 200
+    return jsonify({'sub_id': sub_id, 'message_ids': list(subscribers[sub_id]['message_ids'])}), 200
     
     
 
 # broker functions
 def send_to_subscriber(sub_id, message_id):
+    print('send to subscriber', subscribers[sub_id]['callback_url'])
     if sub_id not in subscribers:
         print(f"Subscriber {sub_id} does not exist.")
         return False
@@ -240,4 +226,4 @@ if __name__ == '__main__':
     # set up broker_endpoints
     broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
     broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'
-    app.run(port=broker_id, debug=False)
+    app.run(port=broker_id, debug=True)
