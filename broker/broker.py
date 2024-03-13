@@ -136,6 +136,7 @@ def get_missed_messages():
     if sub_id not in subscribers:
         return jsonify({'error': 'Subscriber does not exist'}), 404
     for message_id in subscribers[sub_id]['message_ids']:
+        print(f"Sending missed message {message_id} to subscriber {sub_id}.")
         send_to_subscriber(sub_id, message_id)
     return jsonify({'sub_id': sub_id, 'message_ids': list(subscribers[sub_id]['message_ids'])}), 200
     
@@ -143,6 +144,7 @@ def get_missed_messages():
 
 # broker functions
 def send_to_subscriber(sub_id, message_id):
+    print('send to subscriber', subscribers[sub_id]['callback_url'])
     if sub_id not in subscribers:
         print(f"Subscriber {sub_id} does not exist.")
         return False
@@ -221,7 +223,13 @@ if __name__ == '__main__':
     broker_id = args.port
     root_url = f'http://localhost:{args.port}'
                     
-    # set up broker_endpoints
-    broker_endpoints[5000 + (broker_id % 10 + 1) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 1) % 3}'
-    broker_endpoints[5000 + (broker_id % 10 + 2) % 3] = f'http://localhost:{5000 + (broker_id % 10 + 2) % 3}'
+    # read neighbor_broker_{port}.txt to get broker_endpoints
+    try:
+        with open(f'neighbor_broker_{broker_id}.txt', 'r') as file:
+            for line in file:
+                key, value = line.strip().split(' ')
+                broker_endpoints[key] = value
+    except Exception as e:
+        print(f"Failed to read neighbor broker file. Error: {e}")
+    print(f"Taking to neighbor brokers: {broker_endpoints}")
     app.run(port=broker_id, debug=True)

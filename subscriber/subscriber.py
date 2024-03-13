@@ -13,7 +13,7 @@ local_timestamp = 0
 sub_id = ""
 sub_port = ""
 callback_url = ""
-broker_urls = ["http://127.0.0.1:5000", "http://127.0.0.1:5001"]
+broker_urls = []
 info = {}
 txt_filename = ""
 
@@ -230,8 +230,21 @@ if __name__ == "__main__":
         print("userfile not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
-    
+    # read broker_urls_{port}.txt to get broker urls
+    try:
+        with open(f"broker_urls_{sub_port}.txt", 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                line = line.strip()
+                if line:
+                    broker_urls.append(line)
+    except FileNotFoundError:
+        print("broker_urls not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        
+    print(f"Talking to brokers: {broker_urls}")
     # run the flask app
     threading.Thread(target=run_flask_app).start()
     # Make API calls
-    make_api_calls()
+    #make_api_calls()
