@@ -193,27 +193,27 @@ def unsubscribe(topic):
             print(f"An error occurred: {e}")
     return jsonify({'unsubscribed_topics': topic, 'successful_brokers': successful_brokers,'failed_brokers': failed_brokers}), 200
 
-def make_api_calls():  
-    # Example usage
-    with app.app_context():
-        topic1 = "example_topic1"
-        topic2 = "example_topic2"
+# def make_api_calls():  
+#     # Example usage
+#     with app.app_context():
+#         topic1 = "example_topic1"
+#         topic2 = "example_topic2"
 
-        create_topic(topic1)
-        create_topic(topic2)
-        # Try subscribing without specifying a subscriber ID (to test ID generation)
-        get_topics()
-        response = subscribe_to_topic(topic1)
+#         create_topic(topic1)
+#         create_topic(topic2)
+#         # Try subscribing without specifying a subscriber ID (to test ID generation)
+#         get_topics()
+#         response = subscribe_to_topic(topic1)
 
-        subscribe_to_topic(topic2)
-        get_subscribed_topic()
-        unsubscribe(topic2)
-        get_subscribed_topic()
+#         subscribe_to_topic(topic2)
+#         get_subscribed_topic()
+#         unsubscribe(topic2)
+#         get_subscribed_topic()
         
-        publish_to_topic(topic1, "Hello, world!")
+#         publish_to_topic(topic1, "Hello, world!")
 
 def run_flask_app():
-    app.run(port = sub_port, debug=False)
+    app.run(host='0.0.0.0', port=sub_port, debug=False)
     
 if __name__ == "__main__":
     # Run Flask app in a separate thread   parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
@@ -263,4 +263,4 @@ if __name__ == "__main__":
     # run the flask app
     threading.Thread(target=run_flask_app).start()
     # Make API calls
-    make_api_calls()
+    # make_api_calls()

@@ -15,9 +15,14 @@ spec:
     spec:
       containers:
         - name: subscriber1
-          image: your-docker-hub-username/unity-alert-subscriber1:latest
+          image: gurpreets1/unity-alert-kubernetes-deployment-subscriber1:5.0.0
+          command: ["python3", "subscriber.py"]
+          args: ["--port", "8000"]
           ports:
             - containerPort: 8000
+          env:
+            - name: SUBSCRIBER_PORT
+              value: "8000"
 
 ---
 # Subscriber1 Service

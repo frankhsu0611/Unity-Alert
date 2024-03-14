@@ -1,4 +1,3 @@
-# Subscriber2 Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,12 +14,16 @@ spec:
     spec:
       containers:
         - name: subscriber2
-          image: your-docker-hub-username/unity-alert-subscriber1:latest
+          image: gurpreets1/unity-alert-kubernetes-deployment-subscriber1:5.0.0
+          command: ["python3", "subscriber.py"]
+          args: ["--port", "8001"]
           ports:
             - containerPort: 8001
+          env:
+            - name: SUBSCRIBER_PORT
+              value: "8001"
 
 ---
-# Subscriber1 Service
 apiVersion: v1
 kind: Service
 metadata:

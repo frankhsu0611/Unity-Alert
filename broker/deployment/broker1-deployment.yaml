@@ -15,8 +15,13 @@ spec:
       containers:
         - name: broker1
           image: gurpreets1/unity-alert-kubernetes-deployment-broker1:1.0.0
+          command: ["python3", "broker.py"]
+          args: ["--port", "5000"]
           ports:
             - containerPort: 5000
+          env:
+            - name: BROKER_PORT
+              value: "5000"
 
 ---
 apiVersion: v1
