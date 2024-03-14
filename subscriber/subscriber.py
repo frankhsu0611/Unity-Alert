@@ -135,11 +135,13 @@ def get_subscribed_topic():
             response = requests.get(f"{broker_url}/get_subscribed_topics/{sub_id}")
             if response.status_code == 200:
                 print(f"Subscribed Topics: {response.json()['subscribed_topics']}")
-                return response
+                return jsonify({'subscribed_topics': f"{response.json()['subscribed_topics']}"}), 200
             else:
-                print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: {response.json()['error']}")
+                print(f"Failed to get subscribed topics. Status code: {response.status_code}, Message: Failed to get subscribed topics")
+                return jsonify({'error': f"Failed to get subscribed topics. Status code: {response.status_code}, Message: Failed to get subscribed topics"}), 400
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
+            return jsonify({'error': f"An error occurred: {e}"}), 500
 
 @app.route('/enqueue', methods=['POST'])
 def enqueue():
@@ -185,10 +187,11 @@ def unsubscribe(topic):
             if response.status_code == 200:
                 print(f"Unsubscribed from topic {response.json()['topic']}.")
                 successful_brokers.append(broker_url)
+                return jsonify({'unsubscribed_topics': response.json()['topic']}), 200
             else:
                 failed_brokers.append(broker_url)
                 print(f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}")
-                return response
+                return jsonify({f"Failed to unsubscribe. Status code: {response.status_code}, Message: {response.json()['error']}"}), 
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
     return jsonify({'unsubscribed_topics': topic, 'successful_brokers': successful_brokers,'failed_brokers': failed_brokers}), 200

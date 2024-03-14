@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Form, Container, Button, Alert, Card } from "react-bootstrap";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
+import NavBar from "./NavBar";
+import {baseURL} from "../config";
 
 const UnsubscribeForm = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -18,7 +20,7 @@ const UnsubscribeForm = () => {
     e.preventDefault();
   
     // Fetch subscribed topics for the user
-    axios.get("http://127.0.0.1:8000/c_get_subscribed_topics")
+    axios.get(`${baseURL}/c_get_subscribed_topics`)
     .then(response => {
         setTopics(response.data['subscribed_topics'])
         // console.log("here: ", topics);
@@ -27,7 +29,7 @@ const UnsubscribeForm = () => {
       // Check if the selected topic is in the list of subscribed topics
       if (topics.includes(selectedTopic)) {
         // Topic is subscribed, send unsubscribe request
-        axios.post("http://127.0.0.1:8000/c_unsubscribe", {
+        axios.post(`${baseURL}/c_unsubscribe`, {
           topic: selectedTopic,
           timestamp: Date.now()
         })
@@ -93,6 +95,7 @@ const UnsubscribeForm = () => {
         backgroundSize: "cover",
       }}
     >
+    <NavBar />
       <Card
         bg="dark"
         text="white"

@@ -1,25 +1,29 @@
 import React, { useState } from "react";
-import { Form, Container, Button, Alert, Card } from "react-bootstrap";
+import { Form, Container, Button, Alert, Card, Spinner } from "react-bootstrap";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
+import NavBar from "./NavBar";
+import { baseURL } from "../config";
 
 const CreateTopicForm = (props) => {
   const [topic, setTopic] = useState("");
   const [message, setMessage] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const handleTopicChange = (e) => {
     setMessage("");
     setTopic(e.target.value);
   };
 
   const handleSubmit = (e) => {
+    setLoading(true);
     e.preventDefault();
     axios
-      .post("http://127.0.0.1:8000/c_create_topic", {
+      .post(`${baseURL}/c_create_topic`, {
         topic: topic,
         timestamp: Date.now(),
       })
       .then((response) => {
+        setLoading(false);
         console.log(response);
         if (response.status === 200) {
           // Subscription successful
@@ -40,6 +44,7 @@ const CreateTopicForm = (props) => {
       })
       .catch((error) => {
         // console.log("Error heree: ", error);
+        setLoading(false);
         setMessage({
           text: `${error.response.data.error}, Please try again.`,
           variant: "danger",
@@ -62,6 +67,7 @@ const CreateTopicForm = (props) => {
         backgroundSize: "cover",
       }}
     >
+    <NavBar />
       <Card
         bg="dark"
         text="white"
@@ -85,6 +91,13 @@ const CreateTopicForm = (props) => {
           </Form>
         </Card.Body>
         {message && <Alert variant={message.variant}>{message.text}</Alert>}
+        {loading && (
+        <div className="text-center">
+            <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+            </Spinner>
+        </div>
+        )}
       </Card>
     </Container>
   );
