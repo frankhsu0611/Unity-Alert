@@ -1,33 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend1
+  name: frontend-user1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: frontend1
+      app: frontend-user1
   template:
     metadata:
       labels:
-        app: frontend1
+        app: frontend-user1
     spec:
       containers:
-        - name: frontend1
-          image: your-docker-hub-username/react-frontend:v1.0.0
+        - name: frontend
+          image: gurpreets1/unity-alert-kubernetes-deployment-client:3.0.0
           ports:
-            - containerPort: 5000
-
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: REACT_APP_SUBSCRIBER_IP
+              value: "4.255.115.10"
+            - name: REACT_APP_SUBSCRIBER_PORT
+              value: "80"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend1-service
+  name: frontend-user1-service
 spec:
   type: LoadBalancer
-  selector:
-    app: frontend1
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 5000
+    - port: 80 # External port
+      targetPort: 3000 # Container port
+  selector:
+    app: frontend-user1
