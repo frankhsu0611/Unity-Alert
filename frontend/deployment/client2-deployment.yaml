@@ -14,15 +14,16 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: your-frontend-image:latest
+          image: gurpreets1/unity-alert-kubernetes-deployment-client:3.0.0
           ports:
-            - containerPort: 81
+            - containerPort: 3001
           env:
-            - name: SUBSCRIBER_IP
-              value: "subscriber2" # Adjust if necessary
-            - name: SUBSCRIBER_PORT
-              value: "8001"
-
+            - name: PORT
+              value: "3001"
+            - name: REACT_APP_SUBSCRIBER_IP
+              value: "aadc4689cee4743478b5b15ba6db6fa5-120506552.us-east-2.elb.amazonaws.com"
+            - name: REACT_APP_SUBSCRIBER_PORT
+              value: "80"
 ---
 apiVersion: v1
 kind: Service
@@ -33,6 +34,6 @@ spec:
     app: frontend-user2
   ports:
     - protocol: TCP
-      port: 81
-      targetPort: 81
+      port: 80
+      targetPort: 3001
   type: LoadBalancer

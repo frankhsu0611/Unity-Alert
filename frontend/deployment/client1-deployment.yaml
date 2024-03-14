@@ -21,7 +21,7 @@ spec:
             - name: PORT
               value: "3000"
             - name: REACT_APP_SUBSCRIBER_IP
-              value: "4.255.115.10"
+              value: "ab460142f76874e42b9d8ee0a46215c4-692867687.us-east-2.elb.amazonaws.com"
             - name: REACT_APP_SUBSCRIBER_PORT
               value: "80"
 ---
