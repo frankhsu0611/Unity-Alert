@@ -223,7 +223,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
     parser.add_argument('--username', type=str, default='default_user', help='Username to use for the subscriber.')
-    parser.add_argument('--sub_name', type=str, default='default_sub', help='Subscriber name to use for the subscriber.')
+    parser.add_argument('--sub_name', type=str, default='localhost', help='Subscriber name to use for the subscriber.')
     # Parse command-line arguments
     args = parser.parse_args()
     sub_port = args.port
