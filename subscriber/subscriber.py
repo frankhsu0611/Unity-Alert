@@ -196,42 +196,44 @@ def unsubscribe(topic):
             print(f"An error occurred: {e}")
     return jsonify({'unsubscribed_topics': topic, 'successful_brokers': successful_brokers,'failed_brokers': failed_brokers}), 200
 
-def make_api_calls():  
-    # Example usage
-    with app.app_context():
-        topic1 = "example_topic1"
-        topic2 = "example_topic2"
+# def make_api_calls():  
+#     # Example usage
+#     with app.app_context():
+#         topic1 = "example_topic1"
+#         topic2 = "example_topic2"
 
-        create_topic(topic1)
-        create_topic(topic2)
-        # Try subscribing without specifying a subscriber ID (to test ID generation)
-        get_topics()
-        response = subscribe_to_topic(topic1)
+#         create_topic(topic1)
+#         create_topic(topic2)
+#         # Try subscribing without specifying a subscriber ID (to test ID generation)
+#         get_topics()
+#         response = subscribe_to_topic(topic1)
 
-        subscribe_to_topic(topic2)
-        get_subscribed_topic()
-        unsubscribe(topic2)
-        get_subscribed_topic()
+#         subscribe_to_topic(topic2)
+#         get_subscribed_topic()
+#         unsubscribe(topic2)
+#         get_subscribed_topic()
         
-        publish_to_topic(topic1, "Hello, world!")
+#         publish_to_topic(topic1, "Hello, world!")
 
 def run_flask_app():
-    app.run(port = sub_port, debug=False)
+    app.run(host='0.0.0.0', port=sub_port, debug=False)
     
 if __name__ == "__main__":
     # Run Flask app in a separate thread   parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
     parser.add_argument('--username', type=str, default='default_user', help='Username to use for the subscriber.')
+    parser.add_argument('--sub_name', type=str, default='default_sub', help='Subscriber name to use for the subscriber.')
     # Parse command-line arguments
     args = parser.parse_args()
     sub_port = args.port
+    sub_name = args.sub_name
     info['username'] = args.username
     if info['username'] == 'default_user':
         # generate a random uuid
         sub_id = str(uuid.uuid4())
         info['sub_id'] = sub_id
-    callback_url = f'http://localhost:{sub_port}/enqueue'
+    callback_url = f'http://{sub_name}:{sub_port}/enqueue'
     
     #read {username}.txt to get user info
     try:
@@ -266,4 +268,4 @@ if __name__ == "__main__":
     # run the flask app
     threading.Thread(target=run_flask_app).start()
     # Make API calls
-    #make_api_calls()
+    # make_api_calls()

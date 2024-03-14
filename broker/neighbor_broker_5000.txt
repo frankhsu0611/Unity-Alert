@@ -1,2 +1,2 @@
-5001 http://localhost:5001
-5002 http://localhost:5002
+5001 http://broker2:5001
+5002 http://broker3:5002

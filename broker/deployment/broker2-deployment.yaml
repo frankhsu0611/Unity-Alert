@@ -1,0 +1,38 @@
+# Broker2 Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broker2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broker2
+  template:
+    metadata:
+      labels:
+        app: broker2
+    spec:
+      containers:
+        - name: broker2
+          image: gurpreets1/unity-alert-kubernetes-deployment-broker1:1.0.0
+          command: ["python3", "broker.py"]
+          args: ["--port", "5001"]
+          ports:
+            - containerPort: 5001
+          env:
+            - name: BROKER_PORT
+              value: "5001"
+---
+# Broker2 Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: broker2
+spec:
+  selector:
+    app: broker2
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
