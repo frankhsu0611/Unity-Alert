@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, ListGroup, Card } from "react-bootstrap";
 import backgroundImage from "../wallpaper.png";
+import NavBar from "./NavBar";
+import { baseURL } from "../config";
 
 const MessageFeed = () => {
   const [messages, setMessages] = useState([]);
@@ -10,7 +12,7 @@ const MessageFeed = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/c_get_messages`);
+        const response = await axios.get(`${baseURL}/c_get_messages`);
         if (response.data && response.data.messages) {
           // Create a map of existing message IDs for quick lookup
 
@@ -48,6 +50,7 @@ const MessageFeed = () => {
         backgroundSize: "cover",
       }}
     >
+    <NavBar />
       <Card
         bg="dark"
         text="white"

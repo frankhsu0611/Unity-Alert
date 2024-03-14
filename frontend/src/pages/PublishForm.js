@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Form, Button, Alert, Container, Card } from "react-bootstrap";
+import { Form, Button, Alert, Container, Card, Spinner } from "react-bootstrap";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
+import NavBar from "./NavBar";
+import { baseURL } from "../config";
 
 const PublishForm = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -9,11 +11,12 @@ const PublishForm = () => {
   //   const [feedback, setFeedback] = useState("");
   const [topics, setTopics] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Fetch topics list from backend API
     axios
-      .get("http://127.0.0.1:8000/c_get_topics")
+      .get(`${baseURL}/c_get_topics`)
       .then((response) => {
         if (response && response.data && "topics" in response.data) {
           setTopics(response.data["topics"]);
@@ -37,18 +40,20 @@ const PublishForm = () => {
   };
 
   const handleSubmit = (e) => {
+    setLoading(true);
     e.preventDefault();
     if (!selectedTopic || !message) {
       setAlertMessage("Please select a topic and write a message.");
       return;
     }
     axios
-      .post("http://127.0.0.1:8000/c_publish", {
+      .post(`${baseURL}/c_publish`, {
         topic: selectedTopic,
         content: message,
         timestamp: Date.now(),
       })
       .then((response) => {
+        setLoading(false);
         console.log(response);
         if (response.status === 200) {
           // setFeedback("Message published successfully!");
@@ -67,6 +72,7 @@ const PublishForm = () => {
       })
       .catch((error) => {
         //   setFeedback("Failed to publish message. Please try again.");
+        setLoading(false);
         console.error("Publish error:", error);
         setAlertMessage({
           text: `${error}, Please try again.`,
@@ -84,6 +90,7 @@ const PublishForm = () => {
         backgroundSize: "cover",
       }}
     >
+    <NavBar />
       <Card
         bg="dark"
         text="white"
@@ -125,6 +132,13 @@ const PublishForm = () => {
             <Button variant="primary" type="submit">
               Publish
             </Button>
+            {loading && (
+            <div className="text-center">
+                <Spinner animation="border" role="status">
+                <span className="visually-hidden">Loading...</span>
+                </Spinner>
+            </div>
+            )}
           </Form>
         </Card.Body>
       </Card>

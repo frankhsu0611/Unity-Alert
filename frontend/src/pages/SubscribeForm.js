@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { Form, Container, Button, Alert, Card, Row, Col } from "react-bootstrap";
+import { Form, Container, Button, Alert, Card, Spinner } from "react-bootstrap";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
 import NavBar from "./NavBar";
+import { baseURL } from "../config";
 
 const SubscribeForm = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
   const [message, setMessage] = useState("");
   const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Fetch topics list from backend API
     axios
-      .get("http://127.0.0.1:8000/c_get_topics")
+      .get(`${baseURL}/c_get_topics`)
       .then((response) => {
         if (response && response.data && "topics" in response.data) {
           setTopics(response.data["topics"]);
@@ -31,16 +33,17 @@ const SubscribeForm = () => {
     setSelectedTopic(e.target.value);
   };
   const handleSubmit = (e) => {
+    setLoading(true);
     setMessage("");
     e.preventDefault();
-
     // Send subscription request using Axios
     axios
-      .post("http://127.0.0.1:8000/c_subscribe", {
+      .post(`${baseURL}/c_subscribe`, {
         topic: selectedTopic,
         timestamp: Date.now(),
       })
       .then((response) => {
+        setLoading(false);
         console.log(response);
         if (response.status === 200) {
           // Subscription successful
@@ -60,6 +63,7 @@ const SubscribeForm = () => {
         }
       })
       .catch((error) => {
+        setLoading(false);
         console.log("Error heree: ", error);
         setMessage({
           text: `${error}, Please try again.`,
@@ -107,6 +111,13 @@ const SubscribeForm = () => {
             <Button variant="light" type="submit">
               Submit
             </Button>
+            {loading && (
+            <div className="text-center">
+                <Spinner animation="border" role="status">
+                <span className="visually-hidden">Loading...</span>
+                </Spinner>
+            </div>
+            )}
           </Form>
         </Card.Body>
       </Card>

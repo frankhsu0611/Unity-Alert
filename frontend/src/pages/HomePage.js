@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import backgroundImage from "../wallpaper.png";
 import NavBar from "./NavBar";
+import { baseURL } from "../config";
 
 const HomePage = () => {
   const [username, setUsername] = useState('');
@@ -25,7 +26,7 @@ const HomePage = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    axios.post('http://127.0.0.1:8000/c_register', { 'username':username, 'email':email })
+    axios.post(`${baseURL}/c_register`, { 'username':username, 'email':email })
     .then((response) => {
       const { user_uuid } = response.data;
       setUUID(user_uuid);
@@ -82,13 +83,6 @@ const HomePage = () => {
               Subscribe
             </Button>
             <p style={{ color: "white" }}>Stay informed by subscribing to alerts and updates relevant to your interests and location.</p>
-            <Button
-              variant="secondary"
-              onClick={() => navigate("/unsubscribe")}
-            >
-              Unsubscribe
-            </Button>
-            <p style={{ color: "white" }}>Manage your subscriptions and opt-out of alerts that are no longer relevant to you.</p>
             <Button variant="success" onClick={() => navigate("/create-topic")}>
               Create Topic
             </Button>
@@ -101,6 +95,13 @@ const HomePage = () => {
               Message Feed
             </Button>
             <p style={{ color: "white" }}>Access a consolidated feed of important alerts and updates you might have missed, ensuring you're always informed about the latest community safety news and emergency situations.</p>
+            <Button
+              variant="secondary"
+              onClick={() => navigate("/unsubscribe")}
+            >
+              Unsubscribe
+            </Button>
+            <p style={{ color: "white" }}>Manage your subscriptions and opt-out of alerts that are no longer relevant to you.</p>
           </ButtonGroup> : <Card style={{ width: '30rem', padding: '20px', borderRadius: '10px' }}>
         <Card.Header><p className="mt-3">
             Join Unity Alert today and be a part of a safer, more connected community.
