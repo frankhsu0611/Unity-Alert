@@ -15,9 +15,9 @@ spec:
     spec:
       containers:
         - name: subscriber1
-          image: gurpreets1/unity-alert-kubernetes-deployment-subscriber1:5.0.0
+          image: gurpreets1/unity-alert-kubernetes-deployment-subscriber1:6.0.0
           command: ["python3", "subscriber.py"]
-          args: ["--port", "8000"]
+          args: ["--port", "8000", "--sub_name", "subscriber1"]
           ports:
             - containerPort: 8000
           env:
@@ -25,7 +25,7 @@ spec:
               value: "8000"
 
 ---
-# Subscriber1 Service
+# Subscriber1 Internal Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -36,4 +36,19 @@ spec:
   ports:
     - protocol: TCP
       port: 8000
+      targetPort: 8000
+
+---
+# Subscriber1 External Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscriber1-external # A more descriptive name for external access
+spec:
+  type: LoadBalancer
+  selector:
+    app: subscriber1
+  ports:
+    - protocol: TCP
+      port: 80 # Standard HTTP port for easier access
       targetPort: 8000
