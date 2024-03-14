@@ -220,15 +220,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run the Flask app on a specified port.')
     parser.add_argument('--port', type=int, default=8000, help='Port to run the Flask app on.')
     parser.add_argument('--username', type=str, default='default_user', help='Username to use for the subscriber.')
+    parser.add_argument('--sub_name', type=str, default='default_sub', help='Subscriber name to use for the subscriber.')
     # Parse command-line arguments
     args = parser.parse_args()
     sub_port = args.port
+    sub_name = args.sub_name
     info['username'] = args.username
     if info['username'] == 'default_user':
         # generate a random uuid
         sub_id = str(uuid.uuid4())
         info['sub_id'] = sub_id
-    callback_url = f'http://localhost:{sub_port}/enqueue'
+    callback_url = f'http://{sub_name}:{sub_port}/enqueue'
     
     #read {username}.txt to get user info
     try:
