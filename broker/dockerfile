@@ -1,7 +1,7 @@
-# Use an official Python runtime as a base image
+# Use an official Python runtime as a parent image
 FROM python:3.9
 
-# Set the working directory in the container
+# Set the working directory in the container to /app
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
@@ -9,5 +9,9 @@ COPY . /app
 
 RUN pip install Flask flask_cors requests
 
-# Expose the port the app runs on. Adjust this if you use a different port.
+# Make port available to the world outside this container
 EXPOSE 5000
+
+
+# Run broker.py when the container launches
+CMD ["python3", "broker.py"]
