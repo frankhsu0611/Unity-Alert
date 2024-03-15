@@ -26,6 +26,7 @@ the motivation behind the project, a review of existing solutions,
 and a detailed account of the proposed solution’s architecture,
 algorithms, and expected impact on enhancing community safety
 
+**For Installation and setup instructions see the individual folders' ReadMe Files**
 
 **Project Architecture**
 ![p1](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/5394fdae-c985-40cb-91c2-662a6d4649e1)
