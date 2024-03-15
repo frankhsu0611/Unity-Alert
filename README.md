@@ -115,3 +115,6 @@ Response Times Over Time
 
 *Transactions Per Second*
 ![image](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/8e1cbc72-2d1f-425f-b93e-8d3d60156228)
+
+*Pods Scaling Out Once Load Decreases*
+![image](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/09e73389-8299-4535-a524-927f2f912661)
