@@ -85,5 +85,9 @@ Scaled Pod
 ![image](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/667186f4-ab14-4124-b8b5-7b071668a77b)
 ![image](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/50fbda1e-0898-4b41-8938-0ccdee9f9885)
 
+Scaling Out
+![image](https://github.com/frankhsu0611/Unity-Alert/assets/37729999/dd966c8a-9a2e-4c4e-ba2d-cba31316f818)
+
+Response Times Over Time
 
 
